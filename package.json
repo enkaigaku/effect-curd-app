@@ -1,0 +1,24 @@
+{
+  "name": "effect-crud-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "check": "tsc --noEmit",
+    "db:up": "docker-compose up -d",
+    "db:down": "docker-compose down"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.94.1",
+    "@effect/platform-bun": "^0.87.0",
+    "@effect/schema": "^0.75.5",
+    "@effect/sql": "^0.49.0",
+    "@effect/sql-pg": "^0.50.1",
+    "effect": "^3.19.14",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}
