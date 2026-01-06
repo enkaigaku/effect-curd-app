@@ -20,10 +20,10 @@ const handleServiceError = (error: UserNotFoundError | DatabaseError) => {
 }
 
 // ============================================================
-// User Controller Routes
+// User Handler Routes
 // ============================================================
 
-export const UserController = HttpRouter.empty.pipe(
+export const UserHandler = HttpRouter.empty.pipe(
   // GET /users - Get all users
   HttpRouter.get(
     "/users",

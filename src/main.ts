@@ -1,7 +1,7 @@
 import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
-import { UserController } from "./controller/UserController.js"
+import { UserHandler } from "./handler/UserHandler.js"
 import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
 import { DatabaseLive } from "./config/Database.js"
@@ -14,7 +14,7 @@ const AppRouter = HttpRouter.empty.pipe(
   // Health check endpoint
   HttpRouter.get("/health", HttpServerResponse.json({ status: "ok" })),
   // Mount user routes
-  HttpRouter.mount("/", UserController)
+  HttpRouter.mount("/", UserHandler)
 )
 
 // ============================================================
