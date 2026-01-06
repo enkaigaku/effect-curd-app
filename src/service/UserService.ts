@@ -1,50 +1,28 @@
-import { Context, Effect, Layer } from "effect"
+import { Effect } from "effect"
 import { User, CreateUserInput, UpdateUserInput } from "../schema/User.js"
-import { UserRepositoryTag, UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
+import { UserRepository, UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
 
 // ============================================================
-// Service Interface
+// User Service (using Effect.Service pattern)
 // ============================================================
 
-export interface UserService {
-  readonly getAllUsers: () => Effect.Effect<readonly User[], DatabaseError>
-  readonly getUserById: (id: number) => Effect.Effect<User, UserNotFoundError | DatabaseError>
-  readonly createUser: (input: CreateUserInput) => Effect.Effect<User, DatabaseError>
-  readonly updateUser: (id: number, input: UpdateUserInput) => Effect.Effect<User, UserNotFoundError | DatabaseError>
-  readonly deleteUser: (id: number) => Effect.Effect<void, UserNotFoundError | DatabaseError>
-}
+export class UserService extends Effect.Service<UserService>()("UserService", {
+  effect: Effect.gen(function* () {
+    const repository = yield* UserRepository
 
-// ============================================================
-// Service Tag (for dependency injection)
-// ============================================================
-
-export class UserServiceTag extends Context.Tag("UserService")<
-  UserServiceTag,
-  UserService
->() {}
-
-// ============================================================
-// Service Implementation
-// ============================================================
-
-export const UserServiceLive = Layer.effect(
-  UserServiceTag,
-  Effect.gen(function* () {
-    const repository = yield* UserRepositoryTag
-
-    const getAllUsers: UserService["getAllUsers"] = () =>
+    const getAllUsers = (): Effect.Effect<readonly User[], DatabaseError> =>
       repository.findAll()
 
-    const getUserById: UserService["getUserById"] = (id) =>
+    const getUserById = (id: number): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
       repository.findById(id)
 
-    const createUser: UserService["createUser"] = (input) =>
+    const createUser = (input: CreateUserInput): Effect.Effect<User, DatabaseError> =>
       repository.create(input)
 
-    const updateUser: UserService["updateUser"] = (id, input) =>
+    const updateUser = (id: number, input: UpdateUserInput): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
       repository.update(id, input)
 
-    const deleteUser: UserService["deleteUser"] = (id) =>
+    const deleteUser = (id: number): Effect.Effect<void, UserNotFoundError | DatabaseError> =>
       repository.delete(id)
 
     return {
@@ -53,6 +31,7 @@ export const UserServiceLive = Layer.effect(
       createUser,
       updateUser,
       deleteUser,
-    } satisfies UserService
-  })
-)
+    }
+  }),
+  dependencies: [UserRepository.Default],
+}) {}

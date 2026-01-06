@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "@effect/platform"
-import { UserServiceTag } from "../service/UserService.js"
+import { UserService } from "../service/UserService.js"
 import { CreateUserInput, UpdateUserInput, UserIdParam } from "../schema/User.js"
 import { UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
 
@@ -28,7 +28,7 @@ export const UserController = HttpRouter.empty.pipe(
   HttpRouter.get(
     "/users",
     Effect.gen(function* () {
-      const userService = yield* UserServiceTag
+      const userService = yield* UserService
       const users = yield* userService.getAllUsers()
       return yield* HttpServerResponse.json(users)
     }).pipe(
@@ -40,7 +40,7 @@ export const UserController = HttpRouter.empty.pipe(
   HttpRouter.get(
     "/users/:id",
     Effect.gen(function* () {
-      const userService = yield* UserServiceTag
+      const userService = yield* UserService
       const params = yield* HttpRouter.schemaPathParams(UserIdParam)
       const user = yield* userService.getUserById(params.id)
       return yield* HttpServerResponse.json(user)
@@ -55,7 +55,7 @@ export const UserController = HttpRouter.empty.pipe(
   HttpRouter.post(
     "/users",
     Effect.gen(function* () {
-      const userService = yield* UserServiceTag
+      const userService = yield* UserService
       const body = yield* HttpServerRequest.schemaBodyJson(CreateUserInput)
       const user = yield* userService.createUser(body)
       return yield* HttpServerResponse.json(user, { status: 201 })
@@ -70,7 +70,7 @@ export const UserController = HttpRouter.empty.pipe(
   HttpRouter.put(
     "/users/:id",
     Effect.gen(function* () {
-      const userService = yield* UserServiceTag
+      const userService = yield* UserService
       const params = yield* HttpRouter.schemaPathParams(UserIdParam)
       const body = yield* HttpServerRequest.schemaBodyJson(UpdateUserInput)
       const user = yield* userService.updateUser(params.id, body)
@@ -87,7 +87,7 @@ export const UserController = HttpRouter.empty.pipe(
   HttpRouter.del(
     "/users/:id",
     Effect.gen(function* () {
-      const userService = yield* UserServiceTag
+      const userService = yield* UserService
       const params = yield* HttpRouter.schemaPathParams(UserIdParam)
       yield* userService.deleteUser(params.id)
       return yield* HttpServerResponse.json({ message: "User deleted successfully" })
