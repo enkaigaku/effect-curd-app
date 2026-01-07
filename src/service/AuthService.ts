@@ -1,5 +1,6 @@
 import { Effect, Data } from "effect"
 import * as jose from "jose"
+import * as bcrypt from "bcrypt"
 import { JwtPayload } from "../schema/Auth.js"
 
 // ============================================================
@@ -24,6 +25,7 @@ export class TokenExpiredError extends Data.TaggedError("TokenExpiredError")<{
 
 const JWT_SECRET = process.env["JWT_SECRET"] ?? "your-super-secret-key-change-in-production"
 const JWT_EXPIRES_IN = process.env["JWT_EXPIRES_IN"] ?? "1h"
+const BCRYPT_ROUNDS = 12
 
 const secret = new TextEncoder().encode(JWT_SECRET)
 
@@ -81,21 +83,18 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
     const getExpiresIn = (): number => parseExpiresIn(JWT_EXPIRES_IN)
 
-    // Simple password hashing (for demo - use bcrypt/argon2 in production)
+    // Password hashing using bcrypt
     const hashPassword = (password: string): Effect.Effect<string, never> =>
-      Effect.sync(() => {
-        const encoder = new TextEncoder()
-        const data = encoder.encode(password + JWT_SECRET)
-        return Array.from(new Uint8Array(data))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-      })
+      Effect.tryPromise({
+        try: () => bcrypt.hash(password, BCRYPT_ROUNDS),
+        catch: () => new Error("Failed to hash password"),
+      }).pipe(Effect.orDie)
 
     const verifyPassword = (password: string, hash: string): Effect.Effect<boolean, never> =>
-      Effect.gen(function* () {
-        const passwordHash = yield* hashPassword(password)
-        return passwordHash === hash
-      })
+      Effect.tryPromise({
+        try: () => bcrypt.compare(password, hash),
+        catch: () => new Error("Failed to verify password"),
+      }).pipe(Effect.orDie)
 
     return {
       generateToken,
