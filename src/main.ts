@@ -1,4 +1,4 @@
-import { Layer, Logger } from "effect"
+import { Effect, Layer, Logger } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
 import { UserHandler } from "./handler/UserHandler.js"
@@ -29,12 +29,9 @@ const ServerLive = BunHttpServer.layer({ port: PORT })
 // Logger Configuration (UTC timestamps)
 // ============================================================
 
-const UtcTimestampLogger = Logger.replace(
-  Logger.defaultLogger,
-  Logger.prettyLogger({
-    formatDate: (date) => date.toISOString(),
-  })
-)
+const UtcLogger = Logger.prettyLogger({
+  formatDate: (date) => date.toISOString(),
+})
 
 // ============================================================
 // Application Layer Composition
@@ -59,8 +56,7 @@ const HttpLive = AppRouter.pipe(
   HttpServer.serve(),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
-  Layer.provide(AppLive),
-  Layer.provide(UtcTimestampLogger)
+  Layer.provide(AppLive)
 )
 
 console.log("🚀 Effect-ts CRUD Server starting...")
@@ -74,4 +70,9 @@ console.log("   PUT    /users/:id       - Update user")
 console.log("   DELETE /users/:id       - Delete user")
 console.log("")
 
-BunRuntime.runMain(Layer.launch(HttpLive))
+// Run with custom UTC logger, disable BunRuntime's default pretty logger
+const program = Layer.launch(HttpLive).pipe(
+  Effect.provide(Logger.replace(Logger.defaultLogger, UtcLogger))
+)
+
+BunRuntime.runMain(program, { disablePrettyLogger: true })
