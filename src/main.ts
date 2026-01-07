@@ -1,4 +1,4 @@
-import { Effect, Layer, Logger } from "effect"
+import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
 import { UserHandler } from "./handler/UserHandler.js"
@@ -6,6 +6,7 @@ import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
 import { DatabaseLive } from "./config/Database.js"
 import { TracingLive } from "./config/Telemetry.js"
+import { LoggerLive, currentLogLevel } from "./config/Logger.js"
 
 // ============================================================
 // Application Router
@@ -25,14 +26,6 @@ const AppRouter = HttpRouter.empty.pipe(
 const PORT = 8080
 
 const ServerLive = BunHttpServer.layer({ port: PORT })
-
-// ============================================================
-// Logger Configuration (UTC timestamps)
-// ============================================================
-
-const UtcLogger = Logger.prettyLogger({
-  formatDate: (date) => date.toISOString(),
-})
 
 // ============================================================
 // Application Layer Composition
@@ -59,11 +52,13 @@ const HttpLive = AppRouter.pipe(
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
   Layer.provide(AppLive),
-  Layer.provide(TracingLive)
+  Layer.provide(TracingLive),
+  Layer.provide(LoggerLive)
 )
 
 console.log("🚀 Effect-ts CRUD Server starting...")
 console.log(`📍 Server running at http://localhost:${PORT}`)
+console.log(`📊 Log level: ${currentLogLevel.label}`)
 console.log("🔭 Jaeger UI at http://localhost:16686")
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
@@ -74,9 +69,7 @@ console.log("   PUT    /users/:id       - Update user")
 console.log("   DELETE /users/:id       - Delete user")
 console.log("")
 
-// Run with custom UTC logger, disable BunRuntime's default pretty logger
-const program = Layer.launch(HttpLive).pipe(
-  Effect.provide(Logger.replace(Logger.defaultLogger, UtcLogger))
-)
+// Run with LoggerLive configuration, disable BunRuntime's default pretty logger
+const program = Layer.launch(HttpLive)
 
 BunRuntime.runMain(program, { disablePrettyLogger: true })
