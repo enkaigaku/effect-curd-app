@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "@effect/platform"
 import { UserService } from "../service/UserService.js"
-import { CreateUserInput, UpdateUserInput, UserIdParam } from "../schema/User.js"
+import { UpdateUserInput, UserIdParam } from "../schema/User.js"
 import { UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
 
 // ============================================================
@@ -21,6 +21,9 @@ const handleServiceError = (error: UserNotFoundError | DatabaseError) => {
 
 // ============================================================
 // User Handler Routes
+// ============================================================
+// Note: User creation is handled by POST /auth/register
+// This handler only provides read, update, and delete operations
 // ============================================================
 
 export const UserHandler = HttpRouter.empty.pipe(
@@ -47,21 +50,6 @@ export const UserHandler = HttpRouter.empty.pipe(
     }).pipe(
       Effect.catchTag("ParseError", () => errorResponse(400, "Invalid user ID")),
       Effect.catchTag("UserNotFoundError", (e) => handleServiceError(e)),
-      Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
-    )
-  ),
-
-  // POST /users - Create a new user
-  HttpRouter.post(
-    "/users",
-    Effect.gen(function* () {
-      const userService = yield* UserService
-      const body = yield* HttpServerRequest.schemaBodyJson(CreateUserInput)
-      const user = yield* userService.createUser(body)
-      return yield* HttpServerResponse.json(user, { status: 201 })
-    }).pipe(
-      Effect.catchTag("ParseError", () => errorResponse(400, "Invalid input: name and valid email are required")),
-      Effect.catchTag("RequestError", () => errorResponse(400, "Invalid request body")),
       Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
     )
   ),
