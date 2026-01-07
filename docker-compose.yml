@@ -13,7 +13,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   jaeger:
-    image: jaegertracing/all-in-one:1.64
+    image: jaegertracing/all-in-one:latest
     container_name: effect-crud-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
