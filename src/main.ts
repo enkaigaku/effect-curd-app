@@ -1,4 +1,4 @@
-import { Layer } from "effect"
+import { Layer, Logger } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
 import { UserHandler } from "./handler/UserHandler.js"
@@ -21,14 +21,27 @@ const AppRouter = HttpRouter.empty.pipe(
 // HTTP Server Configuration
 // ============================================================
 
-const ServerLive = BunHttpServer.layer({ port: 3000 })
+const PORT = 8080
+
+const ServerLive = BunHttpServer.layer({ port: PORT })
+
+// ============================================================
+// Logger Configuration (UTC timestamps)
+// ============================================================
+
+const UtcTimestampLogger = Logger.replace(
+  Logger.defaultLogger,
+  Logger.prettyLogger({
+    formatDate: (date) => date.toISOString(),
+  })
+)
 
 // ============================================================
 // Application Layer Composition
 // ============================================================
 
 // Layer dependency graph (using Effect.Service pattern):
-// UserController (handler)
+// UserHandler
 //   └── UserService.Default
 //         └── UserRepository.Default
 //               └── Database (PostgreSQL with connection pool)
@@ -46,11 +59,12 @@ const HttpLive = AppRouter.pipe(
   HttpServer.serve(),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
-  Layer.provide(AppLive)
+  Layer.provide(AppLive),
+  Layer.provide(UtcTimestampLogger)
 )
 
 console.log("🚀 Effect-ts CRUD Server starting...")
-console.log("📍 Server running at http://localhost:3000")
+console.log(`📍 Server running at http://localhost:${PORT}`)
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
 console.log("   GET    /users           - Get all users")
