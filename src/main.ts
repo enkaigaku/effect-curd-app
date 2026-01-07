@@ -1,23 +1,12 @@
 import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
-import { UserHandler } from "./handler/UserHandler.js"
+import { HttpServer } from "@effect/platform"
+import { AppRouter } from "./handler/index.js"
 import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
 import { DatabaseLive } from "./config/Database.js"
 import { TracingLive } from "./config/Telemetry.js"
 import { LoggerLive, currentLogLevel } from "./config/Logger.js"
-
-// ============================================================
-// Application Router
-// ============================================================
-
-const AppRouter = HttpRouter.empty.pipe(
-  // Health check endpoint
-  HttpRouter.get("/health", HttpServerResponse.json({ status: "ok" })),
-  // Mount user routes
-  HttpRouter.mount("/", UserHandler)
-)
 
 // ============================================================
 // HTTP Server Configuration
@@ -32,7 +21,7 @@ const ServerLive = BunHttpServer.layer({ port: PORT })
 // ============================================================
 
 // Layer dependency graph (using Effect.Service pattern):
-// UserHandler
+// AppRouter (handler/index.ts)
 //   └── UserService.Default
 //         └── UserRepository.Default
 //               └── Database (PostgreSQL with connection pool)
@@ -62,6 +51,7 @@ console.log(`📊 Log level: ${currentLogLevel.label}`)
 console.log("🔭 Jaeger UI at http://localhost:16686")
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
+console.log("   GET    /ready           - Readiness check")
 console.log("   GET    /users           - Get all users")
 console.log("   GET    /users/:id       - Get user by ID")
 console.log("   POST   /users           - Create new user")
