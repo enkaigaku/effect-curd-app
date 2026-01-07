@@ -1,13 +1,14 @@
 import { Effect, Data } from "effect"
 import { SqlClient } from "@effect/sql"
-import { User, CreateUserInput, UpdateUserInput } from "../schema/User.js"
+import { User, UserWithPassword, CreateUserInput, UpdateUserInput } from "../schema/User.js"
 
 // ============================================================
 // Error Types (using Effect-ts idiomatic Data.TaggedError)
 // ============================================================
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<{
-  readonly id: number
+  readonly id?: number
+  readonly email?: string
 }> {}
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
@@ -23,6 +24,16 @@ const rowToUser = (row: Record<string, unknown>): User =>
     id: row["id"] as number,
     name: row["name"] as string,
     email: row["email"] as string,
+    createdAt: new Date(row["created_at"] as string),
+    updatedAt: new Date(row["updated_at"] as string),
+  })
+
+const rowToUserWithPassword = (row: Record<string, unknown>): UserWithPassword =>
+  new UserWithPassword({
+    id: row["id"] as number,
+    name: row["name"] as string,
+    email: row["email"] as string,
+    password: row["password"] as string,
     createdAt: new Date(row["created_at"] as string),
     updatedAt: new Date(row["updated_at"] as string),
   })
@@ -53,10 +64,21 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
         Effect.withSpan("UserRepository.findById", { attributes: { userId: id } })
       )
 
+    const findByEmail = (email: string): Effect.Effect<UserWithPassword, UserNotFoundError | DatabaseError> =>
+      sql`SELECT id, name, email, password, created_at, updated_at FROM users WHERE email = ${email}`.pipe(
+        Effect.flatMap((rows) =>
+          rows.length === 0
+            ? Effect.fail(new UserNotFoundError({ email }))
+            : Effect.succeed(rowToUserWithPassword(rows[0]!))
+        ),
+        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause }))),
+        Effect.withSpan("UserRepository.findByEmail", { attributes: { email } })
+      )
+
     const create = (input: CreateUserInput): Effect.Effect<User, DatabaseError> =>
       sql`
-        INSERT INTO users (name, email)
-        VALUES (${input.name}, ${input.email})
+        INSERT INTO users (name, email, password)
+        VALUES (${input.name}, ${input.email}, ${input.password})
         RETURNING id, name, email, created_at, updated_at
       `.pipe(
         Effect.map((rows) => rowToUser(rows[0]!)),
@@ -99,6 +121,7 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
     return {
       findAll,
       findById,
+      findByEmail,
       create,
       update,
       delete: deleteFn,

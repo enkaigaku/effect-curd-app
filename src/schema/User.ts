@@ -1,13 +1,26 @@
 import { Schema } from "effect"
 
 // ============================================================
-// User Entity Schema
+// User Entity Schema (without password for responses)
 // ============================================================
 
 export class User extends Schema.Class<User>("User")({
   id: Schema.Number,
   name: Schema.String,
   email: Schema.String,
+  createdAt: Schema.DateFromSelf,
+  updatedAt: Schema.DateFromSelf,
+}) {}
+
+// ============================================================
+// User with Password (for internal use)
+// ============================================================
+
+export class UserWithPassword extends Schema.Class<UserWithPassword>("UserWithPassword")({
+  id: Schema.Number,
+  name: Schema.String,
+  email: Schema.String,
+  password: Schema.String,
   createdAt: Schema.DateFromSelf,
   updatedAt: Schema.DateFromSelf,
 }) {}
@@ -23,6 +36,9 @@ export class CreateUserInput extends Schema.Class<CreateUserInput>("CreateUserIn
   ),
   email: Schema.String.pipe(
     Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: () => "Invalid email format" })
+  ),
+  password: Schema.String.pipe(
+    Schema.minLength(6, { message: () => "Password must be at least 6 characters" })
   ),
 }) {}
 

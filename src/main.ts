@@ -2,6 +2,7 @@ import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { HttpServer } from "@effect/platform"
 import { AppRouter } from "./handler/index.js"
+import { AuthService } from "./service/AuthService.js"
 import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
 import { DatabaseLive } from "./config/Database.js"
@@ -22,12 +23,16 @@ const ServerLive = BunHttpServer.layer({ port: PORT })
 
 // Layer dependency graph (using Effect.Service pattern):
 // AppRouter (handler/index.ts)
+//   ├── AuthService.Default
 //   └── UserService.Default
 //         └── UserRepository.Default
 //               └── Database (PostgreSQL with connection pool)
 //               └── Tracing (OpenTelemetry → Jaeger)
 
-const AppLive = UserService.Default.pipe(
+const AppLive = Layer.mergeAll(
+  AuthService.Default,
+  UserService.Default.pipe(Layer.provide(UserRepository.Default))
+).pipe(
   Layer.provide(UserRepository.Default),
   Layer.provide(DatabaseLive)
 )
@@ -52,6 +57,9 @@ console.log("🔭 Jaeger UI at http://localhost:16686")
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
 console.log("   GET    /ready           - Readiness check")
+console.log("   POST   /auth/register   - Register new user")
+console.log("   POST   /auth/login      - Login and get token")
+console.log("   GET    /auth/me         - Get current user (requires auth)")
 console.log("   GET    /users           - Get all users")
 console.log("   GET    /users/:id       - Get user by ID")
 console.log("   POST   /users           - Create new user")

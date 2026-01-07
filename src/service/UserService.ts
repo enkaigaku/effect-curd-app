@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { User, CreateUserInput, UpdateUserInput } from "../schema/User.js"
+import { User, UserWithPassword, CreateUserInput, UpdateUserInput } from "../schema/User.js"
 import { UserRepository, UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
 
 // ============================================================
@@ -28,6 +28,16 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
         return user
       }).pipe(
         Effect.withSpan("UserService.getUserById", { attributes: { userId: id } })
+      )
+
+    const getUserByEmail = (email: string): Effect.Effect<UserWithPassword, UserNotFoundError | DatabaseError> =>
+      Effect.gen(function* () {
+        yield* Effect.logDebug(`Fetching user by email: ${email}`)
+        const user = yield* repository.findByEmail(email)
+        yield* Effect.logDebug(`Found user: ${user.id}`)
+        return user
+      }).pipe(
+        Effect.withSpan("UserService.getUserByEmail", { attributes: { email } })
       )
 
     const createUser = (input: CreateUserInput): Effect.Effect<User, DatabaseError> =>
@@ -62,6 +72,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
     return {
       getAllUsers,
       getUserById,
+      getUserByEmail,
       createUser,
       updateUser,
       deleteUser,
