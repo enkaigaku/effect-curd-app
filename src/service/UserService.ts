@@ -11,19 +11,29 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
     const repository = yield* UserRepository
 
     const getAllUsers = (): Effect.Effect<readonly User[], DatabaseError> =>
-      repository.findAll()
+      repository.findAll().pipe(
+        Effect.withSpan("UserService.getAllUsers")
+      )
 
     const getUserById = (id: number): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
-      repository.findById(id)
+      repository.findById(id).pipe(
+        Effect.withSpan("UserService.getUserById", { attributes: { userId: id } })
+      )
 
     const createUser = (input: CreateUserInput): Effect.Effect<User, DatabaseError> =>
-      repository.create(input)
+      repository.create(input).pipe(
+        Effect.withSpan("UserService.createUser", { attributes: { email: input.email } })
+      )
 
     const updateUser = (id: number, input: UpdateUserInput): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
-      repository.update(id, input)
+      repository.update(id, input).pipe(
+        Effect.withSpan("UserService.updateUser", { attributes: { userId: id } })
+      )
 
     const deleteUser = (id: number): Effect.Effect<void, UserNotFoundError | DatabaseError> =>
-      repository.delete(id)
+      repository.delete(id).pipe(
+        Effect.withSpan("UserService.deleteUser", { attributes: { userId: id } })
+      )
 
     return {
       getAllUsers,

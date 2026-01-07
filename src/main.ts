@@ -5,6 +5,7 @@ import { UserHandler } from "./handler/UserHandler.js"
 import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
 import { DatabaseLive } from "./config/Database.js"
+import { TracingLive } from "./config/Telemetry.js"
 
 // ============================================================
 // Application Router
@@ -42,6 +43,7 @@ const UtcLogger = Logger.prettyLogger({
 //   └── UserService.Default
 //         └── UserRepository.Default
 //               └── Database (PostgreSQL with connection pool)
+//               └── Tracing (OpenTelemetry → Jaeger)
 
 const AppLive = UserService.Default.pipe(
   Layer.provide(UserRepository.Default),
@@ -56,11 +58,13 @@ const HttpLive = AppRouter.pipe(
   HttpServer.serve(),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
-  Layer.provide(AppLive)
+  Layer.provide(AppLive),
+  Layer.provide(TracingLive)
 )
 
 console.log("🚀 Effect-ts CRUD Server starting...")
 console.log(`📍 Server running at http://localhost:${PORT}`)
+console.log("🔭 Jaeger UI at http://localhost:16686")
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
 console.log("   GET    /users           - Get all users")

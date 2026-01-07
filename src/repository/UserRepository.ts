@@ -38,7 +38,8 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
     const findAll = (): Effect.Effect<readonly User[], DatabaseError> =>
       sql`SELECT id, name, email, created_at, updated_at FROM users ORDER BY id`.pipe(
         Effect.map((rows) => rows.map(rowToUser)),
-        Effect.mapError((cause) => new DatabaseError({ cause }))
+        Effect.mapError((cause) => new DatabaseError({ cause })),
+        Effect.withSpan("UserRepository.findAll")
       )
 
     const findById = (id: number): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
@@ -48,7 +49,8 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
             ? Effect.fail(new UserNotFoundError({ id }))
             : Effect.succeed(rowToUser(rows[0]!))
         ),
-        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause })))
+        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause }))),
+        Effect.withSpan("UserRepository.findById", { attributes: { userId: id } })
       )
 
     const create = (input: CreateUserInput): Effect.Effect<User, DatabaseError> =>
@@ -58,7 +60,8 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
         RETURNING id, name, email, created_at, updated_at
       `.pipe(
         Effect.map((rows) => rowToUser(rows[0]!)),
-        Effect.mapError((cause) => new DatabaseError({ cause }))
+        Effect.mapError((cause) => new DatabaseError({ cause })),
+        Effect.withSpan("UserRepository.create", { attributes: { email: input.email } })
       )
 
     const update = (id: number, input: UpdateUserInput): Effect.Effect<User, UserNotFoundError | DatabaseError> =>
@@ -78,7 +81,8 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
                 Effect.mapError((cause) => new DatabaseError({ cause }) as UserNotFoundError | DatabaseError)
               )
         ),
-        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause })))
+        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause }))),
+        Effect.withSpan("UserRepository.update", { attributes: { userId: id } })
       )
 
     const deleteFn = (id: number): Effect.Effect<void, UserNotFoundError | DatabaseError> =>
@@ -88,7 +92,8 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
             ? Effect.fail(new UserNotFoundError({ id }))
             : Effect.void
         ),
-        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause })))
+        Effect.catchTag("SqlError", (cause) => Effect.fail(new DatabaseError({ cause }))),
+        Effect.withSpan("UserRepository.delete", { attributes: { userId: id } })
       )
 
     return {
