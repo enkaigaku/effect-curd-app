@@ -1,6 +1,14 @@
 import { Schema } from "effect"
 
 // ============================================================
+// Date Schema with JSON Schema annotation for OpenAPI
+// ============================================================
+
+const DateTimeString = Schema.Date.annotations({
+  jsonSchema: { type: "string", format: "date-time" }
+})
+
+// ============================================================
 // User Entity Schema (without password for responses)
 // ============================================================
 
@@ -8,8 +16,8 @@ export class User extends Schema.Class<User>("User")({
   id: Schema.Number,
   name: Schema.String,
   email: Schema.String,
-  createdAt: Schema.DateFromSelf,
-  updatedAt: Schema.DateFromSelf,
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }) {}
 
 // ============================================================
@@ -21,8 +29,8 @@ export class UserWithPassword extends Schema.Class<UserWithPassword>("UserWithPa
   name: Schema.String,
   email: Schema.String,
   password: Schema.String,
-  createdAt: Schema.DateFromSelf,
-  updatedAt: Schema.DateFromSelf,
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }) {}
 
 // ============================================================
