@@ -1,6 +1,6 @@
 import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import { HttpApiBuilder } from "@effect/platform"
+import { HttpApiBuilder, HttpMiddleware } from "@effect/platform"
 import { ApiLive, DocsLive } from "./handler/index.js"
 import { AuthService } from "./service/AuthService.js"
 import { UserService } from "./service/UserService.js"
@@ -16,6 +16,19 @@ import { LoggerLive, currentLogLevel } from "./config/Logger.js"
 const PORT = 8080
 
 const ServerLive = BunHttpServer.layer({ port: PORT })
+
+// ============================================================
+// CORS Configuration
+// ============================================================
+
+const CorsLive = HttpApiBuilder.middleware(
+  HttpMiddleware.cors({
+    allowedOrigins: ["http://localhost:3000"],
+    allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+)
 
 // ============================================================
 // Application Layer Composition
@@ -41,6 +54,7 @@ const ServicesLive = Layer.mergeAll(
 // ============================================================
 
 const HttpLive = HttpApiBuilder.serve().pipe(
+  Layer.provide(CorsLive),
   Layer.provide(DocsLive),
   Layer.provide(ApiLive),
   Layer.provide(ServicesLive),
@@ -52,6 +66,7 @@ const HttpLive = HttpApiBuilder.serve().pipe(
 console.log("🚀 Effect-ts CRUD Server starting...")
 console.log(`📍 Server running at http://localhost:${PORT}`)
 console.log(`📊 Log level: ${currentLogLevel.label}`)
+console.log("🌐 CORS enabled for: http://localhost:3000")
 console.log("🔭 Jaeger UI at http://localhost:16686")
 console.log("📖 Swagger UI at http://localhost:8080/docs")
 console.log("📚 Available endpoints:")
