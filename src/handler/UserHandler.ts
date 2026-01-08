@@ -1,88 +1,97 @@
+import { HttpApiBuilder, HttpServerRequest } from "@effect/platform"
 import { Effect } from "effect"
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "@effect/platform"
+import { Api, UserNotFoundError, DatabaseError, UnauthorizedError } from "../api/index.js"
 import { UserService } from "../service/UserService.js"
-import { UpdateUserInput, UserIdParam } from "../schema/User.js"
-import { UserNotFoundError, DatabaseError } from "../repository/UserRepository.js"
+import { AuthService } from "../service/AuthService.js"
+import { User } from "../schema/User.js"
 
 // ============================================================
-// Error Response Helper
+// Auth Helper
 // ============================================================
 
-const errorResponse = (status: number, message: string) =>
-  HttpServerResponse.json({ error: message }, { status })
+const requireAuth = Effect.gen(function* () {
+  const request = yield* HttpServerRequest.HttpServerRequest
+  const authService = yield* AuthService
 
-const handleServiceError = (error: UserNotFoundError | DatabaseError) => {
-  if (error._tag === "UserNotFoundError") {
-    return errorResponse(404, `User with id ${error.id} not found`)
+  const authHeader = request.headers["authorization"]
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return yield* Effect.fail(new UnauthorizedError({ message: "Missing or invalid Authorization header" }))
   }
-  console.error("Database error:", error.cause)
-  return errorResponse(500, "Internal server error")
-}
 
-// ============================================================
-// User Handler Routes
-// ============================================================
-// Note: User creation is handled by POST /auth/register
-// This handler only provides read, update, and delete operations
-// ============================================================
-
-export const UserHandler = HttpRouter.empty.pipe(
-  // GET /users - Get all users
-  HttpRouter.get(
-    "/users",
-    Effect.gen(function* () {
-      const userService = yield* UserService
-      const users = yield* userService.getAllUsers()
-      return yield* HttpServerResponse.json(users)
-    }).pipe(
-      Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
-    )
-  ),
-
-  // GET /users/:id - Get user by ID
-  HttpRouter.get(
-    "/users/:id",
-    Effect.gen(function* () {
-      const userService = yield* UserService
-      const params = yield* HttpRouter.schemaPathParams(UserIdParam)
-      const user = yield* userService.getUserById(params.id)
-      return yield* HttpServerResponse.json(user)
-    }).pipe(
-      Effect.catchTag("ParseError", () => errorResponse(400, "Invalid user ID")),
-      Effect.catchTag("UserNotFoundError", (e) => handleServiceError(e)),
-      Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
-    )
-  ),
-
-  // PUT /users/:id - Update a user
-  HttpRouter.put(
-    "/users/:id",
-    Effect.gen(function* () {
-      const userService = yield* UserService
-      const params = yield* HttpRouter.schemaPathParams(UserIdParam)
-      const body = yield* HttpServerRequest.schemaBodyJson(UpdateUserInput)
-      const user = yield* userService.updateUser(params.id, body)
-      return yield* HttpServerResponse.json(user)
-    }).pipe(
-      Effect.catchTag("ParseError", () => errorResponse(400, "Invalid input")),
-      Effect.catchTag("RequestError", () => errorResponse(400, "Invalid request body")),
-      Effect.catchTag("UserNotFoundError", (e) => handleServiceError(e)),
-      Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
-    )
-  ),
-
-  // DELETE /users/:id - Delete a user
-  HttpRouter.del(
-    "/users/:id",
-    Effect.gen(function* () {
-      const userService = yield* UserService
-      const params = yield* HttpRouter.schemaPathParams(UserIdParam)
-      yield* userService.deleteUser(params.id)
-      return yield* HttpServerResponse.json({ message: "User deleted successfully" })
-    }).pipe(
-      Effect.catchTag("ParseError", () => errorResponse(400, "Invalid user ID")),
-      Effect.catchTag("UserNotFoundError", (e) => handleServiceError(e)),
-      Effect.catchTag("DatabaseError", (e) => handleServiceError(e))
-    )
+  const token = authHeader.slice(7)
+  return yield* authService.verifyToken(token).pipe(
+    Effect.mapError((e) => new UnauthorizedError({ message: e.message }))
   )
+})
+
+// ============================================================
+// User Handler Implementation (Protected Routes)
+// ============================================================
+
+export const UserHandler = HttpApiBuilder.group(Api, "users", (handlers) =>
+  handlers
+    .handle("getAll", () =>
+      Effect.gen(function* () {
+        yield* requireAuth
+        const userService = yield* UserService
+        const users = yield* userService.getAllUsers().pipe(
+          Effect.mapError((e) => new DatabaseError({ message: String(e) }))
+        )
+        return users
+      })
+    )
+    .handle("getById", ({ path }) =>
+      Effect.gen(function* () {
+        yield* requireAuth
+        const userService = yield* UserService
+        const user = yield* userService.getUserById(path.id).pipe(
+          Effect.mapError((e) => 
+            e._tag === "UserNotFoundError" 
+              ? new UserNotFoundError({ message: `User with id ${path.id} not found` })
+              : new DatabaseError({ message: String(e) })
+          )
+        )
+        return new User({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        })
+      })
+    )
+    .handle("update", ({ path, payload }) =>
+      Effect.gen(function* () {
+        yield* requireAuth
+        const userService = yield* UserService
+        const user = yield* userService.updateUser(path.id, payload).pipe(
+          Effect.mapError((e) => 
+            e._tag === "UserNotFoundError" 
+              ? new UserNotFoundError({ message: `User with id ${path.id} not found` })
+              : new DatabaseError({ message: String(e) })
+          )
+        )
+        return new User({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        })
+      })
+    )
+    .handle("delete", ({ path }) =>
+      Effect.gen(function* () {
+        yield* requireAuth
+        const userService = yield* UserService
+        yield* userService.deleteUser(path.id).pipe(
+          Effect.mapError((e) => 
+            e._tag === "UserNotFoundError" 
+              ? new UserNotFoundError({ message: `User with id ${path.id} not found` })
+              : new DatabaseError({ message: String(e) })
+          )
+        )
+        return { message: "User deleted successfully" }
+      })
+    )
 )

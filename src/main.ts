@@ -1,7 +1,7 @@
 import { Layer } from "effect"
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import { HttpServer } from "@effect/platform"
-import { AppRouter } from "./handler/index.js"
+import { HttpApiBuilder } from "@effect/platform"
+import { ApiLive, DocsLive } from "./handler/index.js"
 import { AuthService } from "./service/AuthService.js"
 import { UserService } from "./service/UserService.js"
 import { UserRepository } from "./repository/UserRepository.js"
@@ -22,14 +22,13 @@ const ServerLive = BunHttpServer.layer({ port: PORT })
 // ============================================================
 
 // Layer dependency graph (using Effect.Service pattern):
-// AppRouter (handler/index.ts)
-//   ├── AuthService.Default
-//   └── UserService.Default
-//         └── UserRepository.Default
-//               └── Database (PostgreSQL with connection pool)
-//               └── Tracing (OpenTelemetry → Jaeger)
+// ApiLive (handler/index.ts)
+//   ├── HealthHandler
+//   ├── AuthHandler → AuthService
+//   └── UserHandler → UserService → UserRepository → Database
+//                   → AuthService (for token verification)
 
-const AppLive = Layer.mergeAll(
+const ServicesLive = Layer.mergeAll(
   AuthService.Default,
   UserService.Default.pipe(Layer.provide(UserRepository.Default))
 ).pipe(
@@ -41,11 +40,11 @@ const AppLive = Layer.mergeAll(
 // Bootstrap
 // ============================================================
 
-const HttpLive = AppRouter.pipe(
-  HttpServer.serve(),
-  HttpServer.withLogAddress,
+const HttpLive = HttpApiBuilder.serve().pipe(
+  Layer.provide(DocsLive),
+  Layer.provide(ApiLive),
+  Layer.provide(ServicesLive),
   Layer.provide(ServerLive),
-  Layer.provide(AppLive),
   Layer.provide(TracingLive),
   Layer.provide(LoggerLive)
 )
@@ -54,6 +53,7 @@ console.log("🚀 Effect-ts CRUD Server starting...")
 console.log(`📍 Server running at http://localhost:${PORT}`)
 console.log(`📊 Log level: ${currentLogLevel.label}`)
 console.log("🔭 Jaeger UI at http://localhost:16686")
+console.log("📖 Swagger UI at http://localhost:8080/docs")
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
 console.log("   GET    /ready           - Readiness check")

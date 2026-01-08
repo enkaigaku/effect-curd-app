@@ -1,30 +1,22 @@
-import { HttpRouter } from "@effect/platform"
+import { HttpApiBuilder, HttpApiSwagger } from "@effect/platform"
+import { Layer } from "effect"
+import { Api } from "../api/index.js"
 import { HealthHandler } from "./health.js"
 import { AuthHandler } from "./AuthHandler.js"
 import { UserHandler } from "./UserHandler.js"
-import { AuthMiddleware } from "../middleware/auth.js"
 
 // ============================================================
-// Application Router - Central Registration
-// ============================================================
-// Add new handlers here as the application grows:
-//   HttpRouter.mount("/products", ProductHandler),
-//   HttpRouter.mount("/orders", OrderHandler),
+// API Implementation Layer
 // ============================================================
 
-// Protected routes - require authentication
-const ProtectedRoutes = HttpRouter.empty.pipe(
-  HttpRouter.mount("/", UserHandler),
-  HttpRouter.use(AuthMiddleware)
+export const ApiLive = HttpApiBuilder.api(Api).pipe(
+  Layer.provide(HealthHandler),
+  Layer.provide(AuthHandler),
+  Layer.provide(UserHandler),
 )
 
-export const AppRouter = HttpRouter.empty.pipe(
-  // Health & readiness checks (public)
-  HttpRouter.mount("/", HealthHandler),
+// ============================================================
+// OpenAPI Swagger UI
+// ============================================================
 
-  // Auth routes (public)
-  HttpRouter.mount("/", AuthHandler),
-
-  // Protected API routes (require authentication)
-  HttpRouter.mount("/", ProtectedRoutes),
-)
+export const DocsLive = HttpApiSwagger.layer({ path: "/docs" })

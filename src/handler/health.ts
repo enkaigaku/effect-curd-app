@@ -1,17 +1,17 @@
-import { HttpRouter, HttpServerResponse } from "@effect/platform"
+import { HttpApiBuilder } from "@effect/platform"
+import { Effect } from "effect"
+import { Api } from "../api/index.js"
 
 // ============================================================
-// Health Check Handler
+// Health Handler Implementation
 // ============================================================
 
-export const HealthHandler = HttpRouter.empty.pipe(
-  HttpRouter.get(
-    "/health",
-    HttpServerResponse.json({ status: "ok" })
-  ),
-
-  HttpRouter.get(
-    "/ready",
-    HttpServerResponse.json({ status: "ready" })
-  )
+export const HealthHandler = HttpApiBuilder.group(Api, "health", (handlers) =>
+  handlers
+    .handle("healthCheck", () =>
+      Effect.succeed({ status: "ok" as const })
+    )
+    .handle("readiness", () =>
+      Effect.succeed({ status: "ready" as const })
+    )
 )
