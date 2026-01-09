@@ -1,6 +1,6 @@
 import { HttpApiBuilder, HttpServerRequest } from "@effect/platform"
 import { Effect } from "effect"
-import { Api, InvalidCredentialsError, ValidationError, UnauthorizedError } from "../api/index.js"
+import { Api, InvalidCredentialsError, ValidationError, UnauthorizedError, EmailAlreadyExistsError } from "../api/index.js"
 import { AuthService } from "../service/AuthService.js"
 import { UserService } from "../service/UserService.js"
 import { User } from "../schema/User.js"
@@ -18,6 +18,17 @@ export const AuthHandler = HttpApiBuilder.group(Api, "auth", (handlers) =>
         const userService = yield* UserService
 
         yield* Effect.logInfo(`Registering new user: ${payload.email}`)
+
+        // Check if email already exists
+        const existingUser = yield* userService.getUserByEmail(payload.email).pipe(
+          Effect.map(() => true),
+          Effect.catchAll(() => Effect.succeed(false))
+        )
+
+        if (existingUser) {
+          yield* Effect.logWarning(`Registration failed: email already exists: ${payload.email}`)
+          return yield* Effect.fail(new EmailAlreadyExistsError({ message: "Email already registered" }))
+        }
 
         // Hash password
         const hashedPassword = yield* authService.hashPassword(payload.password)

@@ -17,5 +17,5 @@ export const Api = HttpApi.make("Effect CRUD API")
 
 // Re-export all API groups
 export { HealthApi } from "./HealthApi.js"
-export { AuthApi, UnauthorizedError, InvalidCredentialsError, ValidationError } from "./AuthApi.js"
+export { AuthApi, UnauthorizedError, InvalidCredentialsError, ValidationError, EmailAlreadyExistsError } from "./AuthApi.js"
 export { UserApi, UserNotFoundError, DatabaseError } from "./UserApi.js"

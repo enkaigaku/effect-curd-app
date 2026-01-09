@@ -25,6 +25,12 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
   HttpApiSchema.annotations({ status: 400 })
 ) {}
 
+export class EmailAlreadyExistsError extends Schema.TaggedError<EmailAlreadyExistsError>()(
+  "EmailAlreadyExistsError",
+  { message: Schema.String },
+  HttpApiSchema.annotations({ status: 409 })
+) {}
+
 // ============================================================
 // Auth API Definition
 // ============================================================
@@ -35,6 +41,7 @@ export class AuthApi extends HttpApiGroup.make("auth")
       .addSuccess(AuthToken)
       .setPayload(RegisterInput)
       .addError(ValidationError)
+      .addError(EmailAlreadyExistsError)
       .annotate(OpenApi.Summary, "Register a new user")
       .annotate(OpenApi.Description, "Create a new user account and receive an access token")
   )
