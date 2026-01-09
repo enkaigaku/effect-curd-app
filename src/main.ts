@@ -1,53 +1,12 @@
 import { Layer } from "effect"
-import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import { HttpApiBuilder, HttpMiddleware } from "@effect/platform"
+import { BunRuntime } from "@effect/platform-bun"
+import { HttpApiBuilder } from "@effect/platform"
 import { ApiLive, DocsLive } from "./handler/index.js"
-import { AuthService } from "./service/AuthService.js"
-import { UserService } from "./service/UserService.js"
-import { UserRepository } from "./repository/UserRepository.js"
-import { DatabaseLive } from "./config/Database.js"
+import { ServerLive, PORT } from "./config/Server.js"
+import { CorsLive, allowedOrigins } from "./config/Cors.js"
+import { ServicesLive } from "./config/Services.js"
 import { TracingLive } from "./config/Telemetry.js"
 import { LoggerLive, currentLogLevel } from "./config/Logger.js"
-
-// ============================================================
-// HTTP Server Configuration
-// ============================================================
-
-const PORT = 8080
-
-const ServerLive = BunHttpServer.layer({ port: PORT })
-
-// ============================================================
-// CORS Configuration
-// ============================================================
-
-const CorsLive = HttpApiBuilder.middleware(
-  HttpMiddleware.cors({
-    allowedOrigins: ["http://localhost:3000"],
-    allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-)
-
-// ============================================================
-// Application Layer Composition
-// ============================================================
-
-// Layer dependency graph (using Effect.Service pattern):
-// ApiLive (handler/index.ts)
-//   ├── HealthHandler
-//   ├── AuthHandler → AuthService
-//   └── UserHandler → UserService → UserRepository → Database
-//                   → AuthService (for token verification)
-
-const ServicesLive = Layer.mergeAll(
-  AuthService.Default,
-  UserService.Default.pipe(Layer.provide(UserRepository.Default))
-).pipe(
-  Layer.provide(UserRepository.Default),
-  Layer.provide(DatabaseLive)
-)
 
 // ============================================================
 // Bootstrap
@@ -66,9 +25,9 @@ const HttpLive = HttpApiBuilder.serve().pipe(
 console.log("🚀 Effect-ts CRUD Server starting...")
 console.log(`📍 Server running at http://localhost:${PORT}`)
 console.log(`📊 Log level: ${currentLogLevel.label}`)
-console.log("🌐 CORS enabled for: http://localhost:3000")
+console.log(`🌐 CORS enabled for: ${allowedOrigins.join(", ")}`)
 console.log("🔭 Jaeger UI at http://localhost:16686")
-console.log("📖 Swagger UI at http://localhost:8080/docs")
+console.log(`📖 Swagger UI at http://localhost:${PORT}/docs`)
 console.log("📚 Available endpoints:")
 console.log("   GET    /health          - Health check")
 console.log("   GET    /ready           - Readiness check")
