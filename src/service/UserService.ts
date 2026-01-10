@@ -80,5 +80,5 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
       deleteUser,
     };
   }),
-  dependencies: [UserRepository.Default],
+  dependencies: [],
 }) {}
