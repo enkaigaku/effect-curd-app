@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { BunContext } from "@effect/platform-bun";
 import { DatabaseLive } from "../config/Database.js";
