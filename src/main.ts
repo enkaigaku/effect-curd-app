@@ -22,7 +22,6 @@ const HttpLive = HttpApiBuilder.serve().pipe(
   Layer.provide(ServerLive),
   Layer.provide(TracingLive),
   Layer.provide(LoggerLive),
-  Layer.provide(HttpApiBuilder.Middleware.layer),
 );
 
 console.log("🚀 Effect-ts CRUD Server starting...");

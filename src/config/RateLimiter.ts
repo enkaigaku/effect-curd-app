@@ -93,7 +93,7 @@ export const RateLimiterLive = Layer.unwrapEffect(
     yield* mw.add(middleware);
     return Layer.empty;
   }),
-);
+).pipe(Layer.provide(HttpApiBuilder.Middleware.layer));
 
 // Export config for logging
 export const rateLimitConfig = {
