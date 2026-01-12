@@ -99,30 +99,6 @@ bun run dev
 | PUT | `/users/:id` | Update user |
 | DELETE | `/users/:id` | Delete user |
 
-## Environment Variables
-
-```bash
-# Server
-PORT=8080
-
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=effect_crud
-DB_USER=postgres
-DB_PASSWORD=postgres
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=1h
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX_REQUESTS=100
-
-# Logging
-LOG_LEVEL=info
-```
 
 ## Documentation
 
