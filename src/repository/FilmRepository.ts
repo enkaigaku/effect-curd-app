@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
-import { Film, FilmDetail, FilmSearchParams, PaginatedFilms } from "../schema/Film.js";
+import { Film, FilmSearchParams, PaginatedFilms } from "../schema/Film.js";
 import { ActorWithName } from "../schema/Actor.js";
 import { Category } from "../schema/Category.js";
 
@@ -39,7 +39,27 @@ export class FilmRepository extends Effect.Service<FilmRepository>()("FilmReposi
             LEFT JOIN category c ON fc.category_id = c.category_id
             WHERE f.film_id = ${filmId}
           `;
-          return rows[0] as FilmDetail | undefined;
+          
+          if (!rows[0]) return undefined;
+          
+          const row = rows[0] as any;
+          return {
+            filmId: row.film_id,
+            title: row.title,
+            description: row.description,
+            releaseYear: row.release_year,
+            languageId: row.language_id,
+            originalLanguageId: row.original_language_id,
+            rentalDuration: row.rental_duration,
+            rentalRate: Number(row.rental_rate),
+            length: row.length,
+            replacementCost: Number(row.replacement_cost),
+            rating: row.rating,
+            specialFeatures: row.special_features,
+            lastUpdate: row.last_update,
+            languageName: row.language_name?.trim() ?? "Unknown",
+            categoryName: row.category_name,
+          };
         }),
 
       // Search films with pagination
