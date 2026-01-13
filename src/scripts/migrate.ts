@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
-import { BunContext, BunFileSystem } from "@effect/platform-bun";
+import { BunContext, BunFileSystem, BunRuntime } from "@effect/platform-bun";
 import { FileSystem, Path } from "@effect/platform";
 import { DatabaseLive } from "../config/Database.js";
 
@@ -45,6 +45,9 @@ const runMigrationsEffect = Effect.gen(function* () {
           // Execute migration SQL
           yield* sql.unsafe(content);
 
+          // Reset search_path in case migration changed it
+          yield* sql`SET search_path TO public`;
+
           // Record migration
           yield* sql`INSERT INTO migrations (name) VALUES (${file})`;
         }),
@@ -62,3 +65,6 @@ export const runMigrations = runMigrationsEffect.pipe(
   Effect.provide(BunFileSystem.layer),
   Effect.provide(BunContext.layer),
 );
+
+// Run if executed directly
+BunRuntime.runMain(runMigrations);
