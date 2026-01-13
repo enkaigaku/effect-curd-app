@@ -13,7 +13,7 @@ const runMigrationsEffect = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const pathService = yield* Path.Path;
 
-  const migrationsDir = pathService.join(process.cwd(), "src/migrations");
+  const migrationsDir = pathService.join(process.cwd(), "migrations");
 
   yield* Effect.logInfo("Checking for pending migrations...");
 
