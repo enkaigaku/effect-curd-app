@@ -1,8 +1,8 @@
 import { describe, it, expect } from "bun:test";
 import { Effect, Layer } from "effect";
-import { UserService } from "./UserService.js";
-import { UserRepository } from "../repository/UserRepository.js";
-import { User } from "../schema/User.js";
+import { UserService } from "../../src/service/UserService.js";
+import { UserRepository } from "../../src/repository/UserRepository.js";
+import { User } from "../../src/schema/User.js";
 
 describe("UserService", () => {
   it("should return paginated users", async () => {
@@ -24,18 +24,15 @@ describe("UserService", () => {
     ];
     const total = 10;
 
-    const MockRepo = Layer.succeed(
-      UserRepository,
-      UserRepository.of({
-        _tag: "UserRepository",
-        findAll: (_limit, _offset) => Effect.succeed({ items: mockUsers, total }),
-        findById: () => Effect.die("Unused"),
-        findByEmail: () => Effect.die("Unused"),
-        create: () => Effect.die("Unused"),
-        update: () => Effect.die("Unused"),
-        delete: () => Effect.die("Unused"),
-      }),
-    );
+    const MockRepo = Layer.succeed(UserRepository, {
+      _tag: "UserRepository" as const,
+      findAll: (_limit: number, _offset: number) => Effect.succeed({ items: mockUsers, total }),
+      findById: () => Effect.die("Unused"),
+      findByEmail: () => Effect.die("Unused"),
+      create: () => Effect.die("Unused"),
+      update: () => Effect.die("Unused"),
+      delete: () => Effect.die("Unused"),
+    });
 
     const program = Effect.gen(function* () {
       const service = yield* UserService;
@@ -54,18 +51,15 @@ describe("UserService", () => {
   });
 
   it("should calculate pages correctly", async () => {
-    const MockRepo = Layer.succeed(
-      UserRepository,
-      UserRepository.of({
-        _tag: "UserRepository",
-        findAll: () => Effect.succeed({ items: [], total: 25 }),
-        findById: () => Effect.die("Unused"),
-        findByEmail: () => Effect.die("Unused"),
-        create: () => Effect.die("Unused"),
-        update: () => Effect.die("Unused"),
-        delete: () => Effect.die("Unused"),
-      }),
-    );
+    const MockRepo = Layer.succeed(UserRepository, {
+      _tag: "UserRepository" as const,
+      findAll: () => Effect.succeed({ items: [], total: 25 }),
+      findById: () => Effect.die("Unused"),
+      findByEmail: () => Effect.die("Unused"),
+      create: () => Effect.die("Unused"),
+      update: () => Effect.die("Unused"),
+      delete: () => Effect.die("Unused"),
+    });
 
     const program = Effect.gen(function* () {
       const service = yield* UserService;
