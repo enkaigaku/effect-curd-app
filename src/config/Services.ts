@@ -6,6 +6,7 @@ import { InventoryService } from "../service/InventoryService.js"
 import { RentalService } from "../service/RentalService.js"
 import { PaymentService } from "../service/PaymentService.js"
 import { CustomerAuthService } from "../service/CustomerAuthService.js"
+import { StaffAuthService } from "../service/StaffAuthService.js"
 import { UserRepository } from "../repository/UserRepository.js"
 import { FilmRepository } from "../repository/FilmRepository.js"
 import { InventoryRepository } from "../repository/InventoryRepository.js"
@@ -25,6 +26,7 @@ import { DatabaseLive } from "./Database.js"
 //   RentalService.Default → RentalRepository.Default + InventoryRepository.Default → DatabaseLive
 //   PaymentService.Default → PaymentRepository.Default → DatabaseLive
 //   CustomerAuthService.Default → DatabaseLive
+//   StaffAuthService.Default → DatabaseLive
 
 export const ServicesLive = Layer.mergeAll(
   AuthService.Default,
@@ -36,7 +38,8 @@ export const ServicesLive = Layer.mergeAll(
     Layer.provide(InventoryRepository.Default)
   ),
   PaymentService.Default.pipe(Layer.provide(PaymentRepository.Default)),
-  CustomerAuthService.Default
+  CustomerAuthService.Default,
+  StaffAuthService.Default
 ).pipe(
   Layer.provide(UserRepository.Default),
   Layer.provide(FilmRepository.Default),
