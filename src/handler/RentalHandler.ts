@@ -23,18 +23,30 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
 
         return yield* rentalService.createRental(input);
       }).pipe(
-        Effect.mapError((err) => {
+        Effect.mapError((err: any) => {
+          // Check for Data.TaggedError by _tag
+          if (err._tag === "CustomerNotFoundError") {
+            return new ApiCustomerNotFoundError({ 
+              message: `Customer ${payload.customerId} not found`, 
+              customerId: payload.customerId 
+            });
+          }
+          if (err._tag === "CustomerInactiveError") {
+            return new ApiCustomerNotFoundError({ 
+              message: `Customer ${payload.customerId} is inactive`, 
+              customerId: payload.customerId 
+            });
+          }
+          if (err._tag === "NoInventoryAvailableError") {
+            return new NoInventoryError({ 
+              message: `No available inventory for film ${payload.filmId} at store ${payload.storeId}`, 
+              filmId: payload.filmId, 
+              storeId: payload.storeId 
+            });
+          }
+          // Fallback for other errors
           const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes("Customer") && msg.includes("not found")) {
-            return new ApiCustomerNotFoundError({ message: msg, customerId: payload.customerId });
-          }
-          if (msg.includes("inactive")) {
-            return new ApiCustomerNotFoundError({ message: msg, customerId: payload.customerId });
-          }
-          if (msg.includes("No available inventory")) {
-            return new NoInventoryError({ message: msg, filmId: payload.filmId, storeId: payload.storeId });
-          }
-          return new RentalError({ message: "Failed to create rental" });
+          return new RentalError({ message: msg || "Failed to create rental" });
         })
       )
     )
