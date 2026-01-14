@@ -4,6 +4,7 @@ import { Api, PaymentNotFoundError, InvalidPaymentError, PaymentError } from "..
 import { PaymentService } from "../service/PaymentService.js";
 import { CreatePaymentInput } from "../schema/Payment.js";
 import { CustomerBalance } from "../schema/Payment.js";
+import { requireStaff, requireAuth } from "../middleware/auth.js";
 
 // ============================================================
 // Payment Handler Implementation
@@ -11,8 +12,11 @@ import { CustomerBalance } from "../schema/Payment.js";
 
 export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =>
   handlers
+    // Protected: Staff only - create payment
     .handle("create", ({ payload }) =>
       Effect.gen(function* () {
+        yield* requireStaff;
+        
         const paymentService = yield* PaymentService;
         
         const input = new CreatePaymentInput({
@@ -25,6 +29,9 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         return yield* paymentService.createPayment(input);
       }).pipe(
         Effect.mapError((err: any) => {
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new PaymentError({ message: "Staff authentication required" });
+          }
           if (err._tag === "InvalidPaymentAmountError") {
             return new InvalidPaymentError({ message: `Invalid payment amount: ${err.amount}` });
           }
@@ -33,8 +40,11 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         })
       )
     )
+    // Protected: requires authentication
     .handle("getById", ({ path }) =>
       Effect.gen(function* () {
+        yield* requireAuth;
+        
         const paymentService = yield* PaymentService;
         const payment = yield* paymentService.getPaymentById(path.paymentId);
 
@@ -47,29 +57,51 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         return payment;
       }).pipe(
         Effect.mapError((err: any) => {
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new PaymentError({ message: "Authentication required" });
+          }
           if (err._tag === "PaymentNotFoundError") return err;
           return new PaymentNotFoundError({ message: "Payment not found", paymentId: path.paymentId });
         })
       )
     )
+    // Protected: Customer can view own payments, Staff can view any
     .handle("customerPayments", ({ path }) =>
       Effect.gen(function* () {
+        const user = yield* requireAuth;
+        
+        // Customer can only view their own payments
+        if (user.type === "customer" && user.id !== path.customerId) {
+          return yield* Effect.fail(new PaymentError({ message: "Access denied" }));
+        }
+        
         const paymentService = yield* PaymentService;
         return yield* paymentService.getCustomerPayments(path.customerId);
       }).pipe(
         Effect.mapError((err: any) => {
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new PaymentError({ message: "Authentication required" });
+          }
+          if (err._tag === "PaymentError") return err;
           const msg = err instanceof Error ? err.message : String(err);
           return new PaymentError({ message: msg || "Failed to fetch payments" });
         })
       )
     )
+    // Protected: Customer can view own balance, Staff can view any
     .handle("customerBalance", ({ path }) =>
       Effect.gen(function* () {
+        const user = yield* requireAuth;
+        
+        // Customer can only view their own balance
+        if (user.type === "customer" && user.id !== path.customerId) {
+          return yield* Effect.fail(new PaymentError({ message: "Access denied" }));
+        }
+        
         const paymentService = yield* PaymentService;
         const balance = yield* paymentService.getCustomerBalance(path.customerId);
 
         if (!balance) {
-          // Return zero balance if customer not found
           return new CustomerBalance({
             customerId: path.customerId,
             customerName: "Unknown",
@@ -80,6 +112,10 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         return balance;
       }).pipe(
         Effect.mapError((err: any) => {
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new PaymentError({ message: "Authentication required" });
+          }
+          if (err._tag === "PaymentError") return err;
           const msg = err instanceof Error ? err.message : String(err);
           return new PaymentError({ message: msg || "Failed to fetch balance" });
         })

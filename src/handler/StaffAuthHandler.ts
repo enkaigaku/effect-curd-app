@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { Api, StaffAuthError } from "../api/index.js";
 import { StaffAuthService } from "../service/StaffAuthService.js";
 import { StaffAuthResponse, StaffProfileResponse } from "../api/StaffAuthApi.js";
+import { requireStaff } from "../middleware/auth.js";
 
 // ============================================================
 // Staff Auth Handler Implementation
@@ -38,8 +39,12 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
         })
       )
     )
+    // Protected: requires staff authentication
     .handle("profile", ({ path }) =>
       Effect.gen(function* () {
+        yield* requireStaff;
+        
+        // Only allow accessing own profile (or any profile for staff)
         const authService = yield* StaffAuthService;
         const profile = yield* authService.getProfile(path.staffId);
 
@@ -59,12 +64,23 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
       }).pipe(
         Effect.mapError((err: any) => {
           if (err._tag === "StaffAuthError") return err;
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new StaffAuthError({ message: "Authentication required" });
+          }
           return new StaffAuthError({ message: "Failed to get profile" });
         })
       )
     )
+    // Protected: requires staff authentication
     .handle("updatePassword", ({ path, payload }) =>
       Effect.gen(function* () {
+        const authUser = yield* requireStaff;
+        
+        // Only allow updating own password
+        if (authUser.id !== path.staffId) {
+          return yield* Effect.fail(new StaffAuthError({ message: "Access denied" }));
+        }
+
         const authService = yield* StaffAuthService;
         yield* authService.updatePassword(
           path.staffId,
@@ -80,12 +96,18 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
           if (err._tag === "StaffNotFoundError") {
             return new StaffAuthError({ message: "Staff not found" });
           }
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new StaffAuthError({ message: "Authentication required" });
+          }
           return new StaffAuthError({ message: "Failed to update password" });
         })
       )
     )
+    // Protected: requires staff authentication
     .handle("list", () =>
       Effect.gen(function* () {
+        yield* requireStaff; // Require authentication
+
         const authService = yield* StaffAuthService;
         const staffList = yield* authService.listStaff();
 
@@ -99,7 +121,10 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
           isActive: staff.isActive,
         }));
       }).pipe(
-        Effect.mapError(() => {
+        Effect.mapError((err: any) => {
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new StaffAuthError({ message: "Authentication required" });
+          }
           return new StaffAuthError({ message: "Failed to list staff" });
         })
       )

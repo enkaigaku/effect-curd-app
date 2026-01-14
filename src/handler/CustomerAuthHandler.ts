@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { Api, CustomerAuthError, CustomerEmailExistsError } from "../api/index.js";
 import { CustomerAuthService } from "../service/CustomerAuthService.js";
 import { CustomerAuthResponse, CustomerProfileResponse } from "../api/CustomerAuthApi.js";
+import { requireCustomer } from "../middleware/auth.js";
 
 // ============================================================
 // Customer Auth Handler Implementation
@@ -65,8 +66,16 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
         })
       )
     )
+    // Protected: requires customer authentication
     .handle("profile", ({ path }) =>
       Effect.gen(function* () {
+        const authUser = yield* requireCustomer;
+        
+        // Only allow accessing own profile
+        if (authUser.id !== path.customerId) {
+          return yield* Effect.fail(new CustomerAuthError({ message: "Access denied" }));
+        }
+
         const authService = yield* CustomerAuthService;
         const profile = yield* authService.getProfile(path.customerId);
 
@@ -85,12 +94,23 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
       }).pipe(
         Effect.mapError((err: any) => {
           if (err._tag === "CustomerAuthError") return err;
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new CustomerAuthError({ message: "Authentication required" });
+          }
           return new CustomerAuthError({ message: "Failed to get profile" });
         })
       )
     )
+    // Protected: requires customer authentication
     .handle("updatePassword", ({ path, payload }) =>
       Effect.gen(function* () {
+        const authUser = yield* requireCustomer;
+        
+        // Only allow updating own password
+        if (authUser.id !== path.customerId) {
+          return yield* Effect.fail(new CustomerAuthError({ message: "Access denied" }));
+        }
+
         const authService = yield* CustomerAuthService;
         yield* authService.updatePassword(
           path.customerId,
@@ -105,6 +125,9 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
           }
           if (err._tag === "CustomerNotFoundError") {
             return new CustomerAuthError({ message: "Customer not found" });
+          }
+          if (err instanceof Error && err.message.includes("Authorization")) {
+            return new CustomerAuthError({ message: "Authentication required" });
           }
           return new CustomerAuthError({ message: "Failed to update password" });
         })
