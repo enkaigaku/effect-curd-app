@@ -7,6 +7,7 @@ import { UserHandler } from "./UserHandler.js"
 import { FilmHandler } from "./FilmHandler.js"
 import { InventoryHandler } from "./InventoryHandler.js"
 import { RentalHandler } from "./RentalHandler.js"
+import { PaymentHandler } from "./PaymentHandler.js"
 
 // ============================================================
 // API Implementation Layer
@@ -19,6 +20,7 @@ export const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide(FilmHandler),
   Layer.provide(InventoryHandler),
   Layer.provide(RentalHandler),
+  Layer.provide(PaymentHandler),
 )
 
 // ============================================================
