@@ -1,16 +1,16 @@
-# Effect-ts CRUD Application
+# DVD Rental API
 
-A layered backend CRUD application built with Effect-ts, PostgreSQL, and Bun runtime.
+A complete DVD rental backend service built with **Effect-ts**, **PostgreSQL (Pagila)**, and **Bun** runtime.
 
 ## Features
 
-- **Effect-ts** - Functional programming with powerful error handling and dependency injection
-- **HttpApi + OpenAPI** - Auto-generated Swagger documentation at `/docs`
-- **JWT Authentication** - Secure API endpoints with Bearer tokens
-- **PostgreSQL** - Type-safe SQL queries with `@effect/sql`
+- **Effect-ts** - Functional programming with type-safe error handling
+- **Pagila Database** - Standard DVD rental sample database
+- **JWT Authentication** - Customer and Staff authentication
+- **OpenAPI** - Auto-generated Swagger documentation at `/docs`
 - **Rate Limiting** - Configurable request throttling per IP
 - **CORS** - Cross-origin resource sharing support
-- **OpenTelemetry** - Distributed tracing with Jaeger integration
+- **OpenTelemetry** - Distributed tracing with Jaeger
 - **Database Migrations** - Version-controlled schema changes
 
 ## Tech Stack
@@ -19,25 +19,32 @@ A layered backend CRUD application built with Effect-ts, PostgreSQL, and Bun run
 |-------|------------|
 | Runtime | Bun |
 | Framework | Effect-ts, @effect/platform |
-| Database | PostgreSQL, @effect/sql |
+| Database | PostgreSQL (Pagila), @effect/sql |
 | Auth | JWT (jose), bcrypt |
 | Docs | OpenAPI 3.1, Swagger UI |
 | Tracing | OpenTelemetry, Jaeger |
+| Testing | Bun test |
 
 ## Project Structure
 
 ```
 src/
-├── api/           # API endpoint definitions (HttpApiEndpoint)
-├── config/        # Configuration layers (Server, CORS, RateLimiter, etc.)
-├── handler/       # Route handlers (HttpApiBuilder.group)
-├── middleware/    # Auth middleware
-├── migrations/    # Database migration SQL files
+├── api/           # API endpoint definitions
+├── config/        # Server, CORS, RateLimiter, Database, Telemetry
+├── handler/       # Route handlers
+├── middleware/    # JWT auth middleware
 ├── repository/    # Data access layer
-├── schema/        # Effect schemas (User, Auth)
-├── scripts/       # Migration runner
-├── service/       # Business logic (UserService, AuthService)
+├── schema/        # Effect schemas
+├── service/       # Business logic
 └── main.ts        # Application entry point
+
+tests/
+├── api/           # API endpoint tests
+├── repository/    # Integration tests
+├── service/       # Unit tests
+└── utils/         # Test utilities
+
+migrations/        # SQL migration files
 ```
 
 ## Getting Started
@@ -45,16 +52,13 @@ src/
 ### Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.0
-- [Docker](https://www.docker.com/) (for PostgreSQL & Jaeger)
+- [Docker](https://www.docker.com/)
 
 ### Installation
 
 ```bash
 # Install dependencies
 bun install
-
-# Copy environment variables
-cp .env.example .env
 
 # Start PostgreSQL & Jaeger
 bun run db:up
@@ -70,10 +74,9 @@ bun run dev
 
 | Script | Description |
 |--------|-------------|
-| `bun run dev` | Start development server with hot reload |
-| `bun run build` | Build for production |
-| `bun run start` | Run production build |
+| `bun run dev` | Start development server |
 | `bun run check` | TypeScript type checking |
+| `bun run test` | Run tests |
 | `bun run migrate` | Run database migrations |
 | `bun run db:up` | Start Docker containers |
 | `bun run db:down` | Stop Docker containers |
@@ -85,25 +88,66 @@ bun run dev
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| GET | `/ready` | Readiness check |
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | Login and get token |
-| GET | `/auth/me` | Get current user info |
+| GET | `/films` | Search films |
+| GET | `/films/:id` | Film details |
+| GET | `/films/:id/actors` | Film actors |
+| GET | `/categories` | All categories |
+| GET | `/stores` | All stores |
+| POST | `/customer/login` | Customer login |
+| POST | `/customer/register` | Customer registration |
+| POST | `/staff/login` | Staff login |
 
-### Protected Routes (require Bearer token)
+### Customer Routes (Bearer token required)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/users` | List all users (paginated) |
-| GET | `/users/:id` | Get user by ID |
-| PUT | `/users/:id` | Update user |
-| DELETE | `/users/:id` | Delete user |
+| GET | `/customer/profile/:id` | Get own profile |
+| PUT | `/customer/password/:id` | Update own password |
+| GET | `/customers/:id/rentals` | Own rental history |
+| GET | `/customers/:id/payments` | Own payment history |
+| GET | `/customers/:id/balance` | Own balance |
 
+### Staff Routes (Bearer token required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/staff` | List all staff |
+| GET | `/staff/profile/:id` | Get staff profile |
+| PUT | `/staff/password/:id` | Update own password |
+| POST | `/rentals` | Create rental |
+| PUT | `/rentals/:id/return` | Return rental |
+| POST | `/payments` | Create payment |
+
+## Authentication
+
+```bash
+# Customer login
+curl -X POST http://localhost:8080/customer/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"MARY.SMITH@sakilacustomer.org","password":"changeme"}'
+
+# Use token
+curl -H "Authorization: Bearer <token>" http://localhost:8080/customer/profile/1
+```
+
+Default passwords:
+- Customers: `changeme`
+- Staff: `changeme`
 
 ## Documentation
 
 - **Swagger UI**: http://localhost:8080/docs
 - **Jaeger UI**: http://localhost:16686
+
+## Testing
+
+```bash
+# Run all tests
+bun test
+
+# Run with coverage
+bun test --coverage
+```
 
 ## License
 
