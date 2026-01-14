@@ -51,7 +51,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
               customerId,
               dueDate,
             });
-          })
+          }),
         ),
 
       // Return a rental
@@ -82,13 +82,15 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
             const rentalRate = Number(row.rental_rate);
 
             // Calculate rental days and late fee
-            const rentalDays = Math.ceil((returnDate.getTime() - rentalDate.getTime()) / (24 * 60 * 60 * 1000));
+            const rentalDays = Math.ceil(
+              (returnDate.getTime() - rentalDate.getTime()) / (24 * 60 * 60 * 1000),
+            );
             const lateDays = Math.max(0, rentalDays - rentalDuration);
             const lateFee = lateDays * rentalRate;
 
             // Update rental with return date
             yield* sql`
-              UPDATE rental 
+              UPDATE rental
               SET return_date = ${returnDate}
               WHERE rental_id = ${rentalId}
             `;
@@ -99,14 +101,14 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
               rentalDays,
               lateFee,
             });
-          })
+          }),
         ),
 
       // Get rental by ID with details
       findById: (rentalId: number) =>
         Effect.gen(function* () {
           const rows = yield* sql`
-            SELECT 
+            SELECT
               r.rental_id,
               r.rental_date,
               r.return_date,
@@ -143,7 +145,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
       getCustomerRentals: (customerId: number, limit: number = 20) =>
         Effect.gen(function* () {
           const rows = yield* sql`
-            SELECT 
+            SELECT
               r.rental_id,
               r.rental_date,
               r.return_date,
@@ -163,23 +165,26 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
             LIMIT ${limit}
           `;
 
-          return rows.map((row: any) => new RentalDetail({
-            rentalId: row.rental_id,
-            rentalDate: row.rental_date,
-            returnDate: row.return_date,
-            filmTitle: row.film_title,
-            customerName: row.customer_name,
-            customerEmail: row.customer_email,
-            storeName: row.store_name,
-            isReturned: row.return_date !== null,
-          }));
+          return rows.map(
+            (row: any) =>
+              new RentalDetail({
+                rentalId: row.rental_id,
+                rentalDate: row.rental_date,
+                returnDate: row.return_date,
+                filmTitle: row.film_title,
+                customerName: row.customer_name,
+                customerEmail: row.customer_email,
+                storeName: row.store_name,
+                isReturned: row.return_date !== null,
+              }),
+          );
         }),
 
       // Get customer info
       getCustomer: (customerId: number) =>
         Effect.gen(function* () {
           const rows = yield* sql`
-            SELECT 
+            SELECT
               customer_id,
               CONCAT(first_name, ' ', last_name) as full_name,
               email,

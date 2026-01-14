@@ -43,15 +43,17 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
         const rentalService = yield* RentalService;
         return yield* rentalService.returnRental(path.rentalId);
       }).pipe(
-        Effect.mapError((err) => {
+        Effect.mapError((err: any) => {
+          // Check for Data.TaggedError by _tag
+          if (err._tag === "RentalNotFoundError") {
+            return new ApiRentalNotFoundError({ message: `Rental ${path.rentalId} not found`, rentalId: path.rentalId });
+          }
+          if (err._tag === "RentalAlreadyReturnedError") {
+            return new RentalError({ message: `Rental ${path.rentalId} already returned` });
+          }
+          // Fallback for other errors
           const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes("not found")) {
-            return new ApiRentalNotFoundError({ message: msg, rentalId: path.rentalId });
-          }
-          if (msg.includes("already returned")) {
-            return new RentalError({ message: msg });
-          }
-          return new RentalError({ message: "Failed to return rental" });
+          return new RentalError({ message: msg || "Failed to return rental" });
         })
       )
     )
