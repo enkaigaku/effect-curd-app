@@ -33,7 +33,7 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           });
         }),
 
-      // Get customer balance using DB function
+      // Get customer balance (total rentals - total payments)
       getCustomerBalance: (customerId: number) =>
         Effect.gen(function* () {
           // Get customer name
@@ -47,9 +47,24 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
 
           const customerName = customerRows[0]["name"] as string;
 
-          // Get balance using Pagila's get_customer_balance function
+          // Calculate balance: sum of rental fees - sum of payments
           const balanceRows = yield* sql`
-            SELECT get_customer_balance(${customerId}, NOW()) as balance
+            WITH rental_fees AS (
+              SELECT 
+                COALESCE(SUM(f.rental_rate), 0) as total_fees
+              FROM rental r
+              JOIN inventory i ON r.inventory_id = i.inventory_id
+              JOIN film f ON i.film_id = f.film_id
+              WHERE r.customer_id = ${customerId}
+            ),
+            payments AS (
+              SELECT COALESCE(SUM(amount), 0) as total_payments
+              FROM payment
+              WHERE customer_id = ${customerId}
+            )
+            SELECT 
+              (rental_fees.total_fees - payments.total_payments) as balance
+            FROM rental_fees, payments
           `;
 
           const balance = Number(balanceRows[0]?.["balance"] ?? 0);
