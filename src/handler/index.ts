@@ -5,6 +5,7 @@ import { HealthHandler } from "./health.js"
 import { AuthHandler } from "./AuthHandler.js"
 import { UserHandler } from "./UserHandler.js"
 import { FilmHandler } from "./FilmHandler.js"
+import { InventoryHandler } from "./InventoryHandler.js"
 
 // ============================================================
 // API Implementation Layer
@@ -15,6 +16,7 @@ export const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide(AuthHandler),
   Layer.provide(UserHandler),
   Layer.provide(FilmHandler),
+  Layer.provide(InventoryHandler),
 )
 
 // ============================================================
