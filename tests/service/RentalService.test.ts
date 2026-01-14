@@ -3,7 +3,7 @@ import { Effect, Layer, Exit } from "effect";
 import { RentalService, CustomerNotFoundError, CustomerInactiveError, NoInventoryAvailableError } from "../../src/service/RentalService.js";
 import { RentalRepository } from "../../src/repository/RentalRepository.js";
 import { InventoryRepository } from "../../src/repository/InventoryRepository.js";
-import { CreateRentalInput, RentalCreated, RentalReturned } from "../../src/schema/Rental.js";
+import { CreateRentalInput, RentalCreated } from "../../src/schema/Rental.js";
 import { CustomerInfo } from "../../src/schema/Customer.js";
 
 // ============================================================
@@ -45,6 +45,7 @@ const createTestLayer = (overrides: {
   findAvailableInventory?: () => Effect.Effect<number | undefined>;
 } = {}) => {
   const MockRentalRepo = Layer.succeed(RentalRepository, {
+    _tag: "RentalRepository" as const,
     getCustomer: overrides.getCustomer ?? (() => Effect.succeed(mockCustomerActive)),
     createRental: overrides.createRental ?? (() => Effect.succeed(mockRentalCreated)),
     returnRental: () => Effect.succeed({} as any),
@@ -53,6 +54,7 @@ const createTestLayer = (overrides: {
   });
 
   const MockInventoryRepo = Layer.succeed(InventoryRepository, {
+    _tag: "InventoryRepository" as const,
     getFilmAvailability: () => Effect.succeed(undefined),
     getFilmAvailabilityAllStores: () => Effect.succeed([]),
     findAvailableInventory: overrides.findAvailableInventory ?? (() => Effect.succeed(100)),
@@ -60,14 +62,15 @@ const createTestLayer = (overrides: {
     getStoreById: () => Effect.succeed(undefined),
   });
 
-  // Manually build RentalService Layer without Default dependencies
+  // Manually build RentalService Layer
   const TestRentalService = Layer.effect(
     RentalService,
     Effect.gen(function* () {
       const rentalRepo = yield* RentalRepository;
       const inventoryRepo = yield* InventoryRepository;
 
-      return RentalService.of({
+      return {
+        _tag: "RentalService" as const,
         createRental: (input: CreateRentalInput) =>
           Effect.gen(function* () {
             const customer = yield* rentalRepo.getCustomer(input.customerId);
@@ -89,7 +92,7 @@ const createTestLayer = (overrides: {
         getRentalById: () => Effect.succeed(undefined),
         getCustomerRentals: () => Effect.succeed([]),
         getCustomer: () => Effect.succeed(undefined),
-      });
+      };
     })
   ).pipe(
     Layer.provide(MockRentalRepo),

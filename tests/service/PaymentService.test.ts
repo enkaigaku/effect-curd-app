@@ -2,7 +2,7 @@ import { describe, it, expect } from "bun:test";
 import { Effect, Layer, Exit } from "effect";
 import { PaymentService, InvalidPaymentAmountError } from "../../src/service/PaymentService.js";
 import { PaymentRepository } from "../../src/repository/PaymentRepository.js";
-import { CreatePaymentInput, PaymentCreated, CustomerBalance, PaymentDetail } from "../../src/schema/Payment.js";
+import { CreatePaymentInput, PaymentCreated, CustomerBalance } from "../../src/schema/Payment.js";
 
 // ============================================================
 // Mock Data
@@ -31,6 +31,7 @@ const createTestLayer = (overrides: {
   getCustomerBalance?: () => Effect.Effect<CustomerBalance | undefined>;
 } = {}) => {
   const MockPaymentRepo = Layer.succeed(PaymentRepository, {
+    _tag: "PaymentRepository" as const,
     createPayment: overrides.createPayment ?? (() => Effect.succeed(mockPaymentCreated)),
     getCustomerBalance: overrides.getCustomerBalance ?? (() => Effect.succeed(mockCustomerBalance)),
     getCustomerPayments: () => Effect.succeed([]),
@@ -42,7 +43,8 @@ const createTestLayer = (overrides: {
     Effect.gen(function* () {
       const repo = yield* PaymentRepository;
 
-      return PaymentService.of({
+      return {
+        _tag: "PaymentService" as const,
         createPayment: (input: CreatePaymentInput) =>
           Effect.gen(function* () {
             if (input.amount <= 0) {
@@ -53,7 +55,7 @@ const createTestLayer = (overrides: {
         getCustomerBalance: (customerId: number) => repo.getCustomerBalance(customerId),
         getCustomerPayments: (customerId: number) => repo.getCustomerPayments(customerId, 20),
         getPaymentById: (paymentId: number) => repo.findById(paymentId),
-      });
+      };
     })
   ).pipe(Layer.provide(MockPaymentRepo));
 
