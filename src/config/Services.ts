@@ -1,13 +1,10 @@
 import { Layer } from "effect"
-import { AuthService } from "../service/AuthService.js"
-import { UserService } from "../service/UserService.js"
 import { FilmService } from "../service/FilmService.js"
 import { InventoryService } from "../service/InventoryService.js"
 import { RentalService } from "../service/RentalService.js"
 import { PaymentService } from "../service/PaymentService.js"
 import { CustomerAuthService } from "../service/CustomerAuthService.js"
 import { StaffAuthService } from "../service/StaffAuthService.js"
-import { UserRepository } from "../repository/UserRepository.js"
 import { FilmRepository } from "../repository/FilmRepository.js"
 import { InventoryRepository } from "../repository/InventoryRepository.js"
 import { RentalRepository } from "../repository/RentalRepository.js"
@@ -19,8 +16,6 @@ import { DatabaseLive } from "./Database.js"
 // ============================================================
 
 // Layer dependency graph:
-//   AuthService.Default
-//   UserService.Default → UserRepository.Default → DatabaseLive
 //   FilmService.Default → FilmRepository.Default → DatabaseLive
 //   InventoryService.Default → InventoryRepository.Default → DatabaseLive
 //   RentalService.Default → RentalRepository.Default + InventoryRepository.Default → DatabaseLive
@@ -29,8 +24,6 @@ import { DatabaseLive } from "./Database.js"
 //   StaffAuthService.Default → DatabaseLive
 
 export const ServicesLive = Layer.mergeAll(
-  AuthService.Default,
-  UserService.Default.pipe(Layer.provide(UserRepository.Default)),
   FilmService.Default.pipe(Layer.provide(FilmRepository.Default)),
   InventoryService.Default.pipe(Layer.provide(InventoryRepository.Default)),
   RentalService.Default.pipe(
@@ -41,7 +34,6 @@ export const ServicesLive = Layer.mergeAll(
   CustomerAuthService.Default,
   StaffAuthService.Default
 ).pipe(
-  Layer.provide(UserRepository.Default),
   Layer.provide(FilmRepository.Default),
   Layer.provide(InventoryRepository.Default),
   Layer.provide(RentalRepository.Default),
