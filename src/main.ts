@@ -24,23 +24,23 @@ const HttpLive = HttpApiBuilder.serve().pipe(
   Layer.provide(LoggerLive),
 );
 
-console.log("🚀 Effect-ts CRUD Server starting...");
-console.log(`📍 Server running at http://localhost:${PORT}`);
+console.log("🚀 DVD Rental API starting...");
+console.log(`📍 Server: http://localhost:${PORT}`);
+console.log(`📖 Swagger: http://localhost:${PORT}/docs`);
 console.log(`📊 Log level: ${currentLogLevel.label}`);
-console.log(`🌐 CORS enabled for: ${allowedOrigins.join(", ")}`);
+console.log(`🌐 CORS: ${allowedOrigins.join(", ")}`);
 console.log(`🛡️  Rate limit: ${rateLimitConfig.maxRequests} req/${rateLimitConfig.windowMs / 1000}s`);
-console.log("🔭 Jaeger UI at http://localhost:16686");
-console.log(`📖 Swagger UI at http://localhost:${PORT}/docs`);
-console.log("📚 Available endpoints:");
-console.log("   GET    /health          - Health check");
-console.log("   GET    /ready           - Readiness check");
-console.log("   POST   /auth/register   - Register new user");
-console.log("   POST   /auth/login      - Login and get token");
-console.log("   GET    /auth/me         - Get current user (requires auth)");
-console.log("   GET    /users           - Get all users (requires auth)");
-console.log("   GET    /users/:id       - Get user by ID (requires auth)");
-console.log("   PUT    /users/:id       - Update user (requires auth)");
-console.log("   DELETE /users/:id       - Delete user (requires auth)");
+console.log("🔭 Jaeger: http://localhost:16686");
+console.log("");
+console.log("📚 Endpoints:");
+console.log("   Health:     GET  /health, /ready");
+console.log("   Films:      GET  /films, /films/:id, /films/:id/actors, /films/:id/availability");
+console.log("   Categories: GET  /categories");
+console.log("   Stores:     GET  /stores, /stores/:id, /stores/:storeId/films/:filmId/availability");
+console.log("   Rentals:    POST /rentals, PUT /rentals/:id/return, GET /customers/:id/rentals");
+console.log("   Payments:   POST /payments, GET /payments/:id, /customers/:id/payments, /customers/:id/balance");
+console.log("   Customer:   POST /customer/login, /customer/register, GET /customer/profile/:id");
+console.log("   Staff:      POST /staff/login, GET /staff, /staff/profile/:id");
 console.log("");
 
 // Run with LoggerLive configuration, disable BunRuntime's default pretty logger
