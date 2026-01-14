@@ -8,6 +8,8 @@
     "start": "bun run dist/main.js",
     "check": "tsc --noEmit",
     "clean": "rm -rf dist",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
     "docker:build": "docker build -t effect-crud-app .",
     "docker:run": "docker run -p 8080:8080 --env-file .env effect-crud-app",
     "db:up": "docker-compose up -d",
