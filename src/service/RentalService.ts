@@ -1,46 +1,32 @@
-import { Effect } from "effect";
+import { Effect, Data } from "effect";
 import { RentalRepository } from "../repository/RentalRepository.js";
 import { InventoryRepository } from "../repository/InventoryRepository.js";
 import { CreateRentalInput } from "../schema/Rental.js";
 
 // ============================================================
-// Rental Service Errors
+// Rental Service Errors (Data.TaggedError)
 // ============================================================
 
-export class CustomerNotFoundError extends Error {
-  readonly _tag = "CustomerNotFoundError";
-  constructor(customerId: number) {
-    super(`Customer ${customerId} not found`);
-  }
-}
+export class CustomerNotFoundError extends Data.TaggedError("CustomerNotFoundError")<{
+  readonly customerId: number;
+}> {}
 
-export class CustomerInactiveError extends Error {
-  readonly _tag = "CustomerInactiveError";
-  constructor(customerId: number) {
-    super(`Customer ${customerId} is inactive`);
-  }
-}
+export class CustomerInactiveError extends Data.TaggedError("CustomerInactiveError")<{
+  readonly customerId: number;
+}> {}
 
-export class NoInventoryAvailableError extends Error {
-  readonly _tag = "NoInventoryAvailableError";
-  constructor(filmId: number, storeId: number) {
-    super(`No available inventory for film ${filmId} at store ${storeId}`);
-  }
-}
+export class NoInventoryAvailableError extends Data.TaggedError("NoInventoryAvailableError")<{
+  readonly filmId: number;
+  readonly storeId: number;
+}> {}
 
-export class RentalNotFoundError extends Error {
-  readonly _tag = "RentalNotFoundError";
-  constructor(rentalId: number) {
-    super(`Rental ${rentalId} not found`);
-  }
-}
+export class RentalNotFoundError extends Data.TaggedError("RentalNotFoundError")<{
+  readonly rentalId: number;
+}> {}
 
-export class RentalAlreadyReturnedError extends Error {
-  readonly _tag = "RentalAlreadyReturnedError";
-  constructor(rentalId: number) {
-    super(`Rental ${rentalId} already returned`);
-  }
-}
+export class RentalAlreadyReturnedError extends Data.TaggedError("RentalAlreadyReturnedError")<{
+  readonly rentalId: number;
+}> {}
 
 // ============================================================
 // Rental Service
@@ -60,16 +46,16 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
           // 1. Validate customer exists and is active
           const customer = yield* rentalRepo.getCustomer(input.customerId);
           if (!customer) {
-            return yield* Effect.fail(new CustomerNotFoundError(input.customerId));
+            return yield* Effect.fail(new CustomerNotFoundError({ customerId: input.customerId }));
           }
           if (!customer.isActive) {
-            return yield* Effect.fail(new CustomerInactiveError(input.customerId));
+            return yield* Effect.fail(new CustomerInactiveError({ customerId: input.customerId }));
           }
 
           // 2. Find available inventory
           const inventoryId = yield* inventoryRepo.findAvailableInventory(input.filmId, input.storeId);
           if (!inventoryId) {
-            return yield* Effect.fail(new NoInventoryAvailableError(input.filmId, input.storeId));
+            return yield* Effect.fail(new NoInventoryAvailableError({ filmId: input.filmId, storeId: input.storeId }));
           }
 
           // 3. Create rental
@@ -92,10 +78,10 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
             Effect.mapError((err) => {
               const msg = err instanceof Error ? err.message : String(err);
               if (msg.includes("not found")) {
-                return new RentalNotFoundError(rentalId);
+                return new RentalNotFoundError({ rentalId });
               }
               if (msg.includes("already returned")) {
-                return new RentalAlreadyReturnedError(rentalId);
+                return new RentalAlreadyReturnedError({ rentalId });
               }
               return err;
             })
