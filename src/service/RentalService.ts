@@ -41,10 +41,19 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
       // Create a new rental with validation
       createRental: (input: CreateRentalInput) =>
         Effect.gen(function* () {
-          yield* Effect.logInfo(`Creating rental: film=${input.filmId}, customer=${input.customerId}, store=${input.storeId}`);
+          yield* Effect.logInfo(
+            `Creating rental: film=${input.filmId}, customer=${input.customerId}, store=${input.storeId}`,
+          );
 
-          // 1. Validate customer exists and is active
-          const customer = yield* rentalRepo.getCustomer(input.customerId);
+          // 1. Validate customer and find inventory in parallel
+          const [customer, inventoryId] = yield* Effect.all(
+            [
+              rentalRepo.getCustomer(input.customerId),
+              inventoryRepo.findAvailableInventory(input.filmId, input.storeId),
+            ],
+            { concurrency: "unbounded" },
+          );
+
           if (!customer) {
             return yield* Effect.fail(new CustomerNotFoundError({ customerId: input.customerId }));
           }
@@ -52,17 +61,17 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
             return yield* Effect.fail(new CustomerInactiveError({ customerId: input.customerId }));
           }
 
-          // 2. Find available inventory
-          const inventoryId = yield* inventoryRepo.findAvailableInventory(input.filmId, input.storeId);
           if (!inventoryId) {
-            return yield* Effect.fail(new NoInventoryAvailableError({ filmId: input.filmId, storeId: input.storeId }));
+            return yield* Effect.fail(
+              new NoInventoryAvailableError({ filmId: input.filmId, storeId: input.storeId }),
+            );
           }
 
           // 3. Create rental
           const rental = yield* rentalRepo.createRental(
             inventoryId,
             input.customerId,
-            input.staffId ?? 1
+            input.staffId ?? 1,
           );
 
           yield* Effect.logInfo(`Rental created: id=${rental.rentalId}`);
@@ -84,7 +93,7 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
                 return new RentalAlreadyReturnedError({ rentalId });
               }
               return err;
-            })
+            }),
           );
 
           yield* Effect.logInfo(`Rental returned: id=${rentalId}, lateFee=${result.lateFee}`);
