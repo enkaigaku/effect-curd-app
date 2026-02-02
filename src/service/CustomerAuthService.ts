@@ -51,13 +51,13 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("CustomerAuthService", {
+  accessors: true,
   effect: Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
 
     return {
       // Customer login
-      login: (email: string, password: string) =>
-        Effect.gen(function* () {
+      login: Effect.fn("CustomerAuthService.login")(function* (email: string, password: string) {
           yield* Effect.logInfo(`Customer login attempt: ${email}`);
 
           const rows = yield* sql`
@@ -105,11 +105,10 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
             lastName: customer.last_name,
             token,
           } as CustomerAuthResult;
-        }),
+      }),
 
       // Customer registration (for new customers without full address)
-      register: (email: string, password: string, firstName: string, lastName: string, storeId: StoreId = 1 as StoreId) =>
-        Effect.gen(function* () {
+      register: Effect.fn("CustomerAuthService.register")(function* (email: string, password: string, firstName: string, lastName: string, storeId: StoreId = 1 as StoreId) {
           yield* Effect.logInfo(`Customer registration: ${email}`);
 
           // Check if email already exists
@@ -156,11 +155,10 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
             lastName,
             token,
           } as CustomerAuthResult;
-        }),
+      }),
 
       // Get customer profile
-      getProfile: (customerId: CustomerId) =>
-        Effect.gen(function* () {
+      getProfile: Effect.fn("CustomerAuthService.getProfile")(function* (customerId: CustomerId) {
           const rows = yield* sql`
             SELECT customer_id, email, first_name, last_name, store_id, activebool, create_date
             FROM customer
@@ -179,11 +177,10 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
             isActive: row.activebool,
             createDate: row.create_date,
           } as CustomerProfile;
-        }),
+      }),
 
       // Update password
-      updatePassword: (customerId: CustomerId, currentPassword: string, newPassword: string) =>
-        Effect.gen(function* () {
+      updatePassword: Effect.fn("CustomerAuthService.updatePassword")(function* (customerId: CustomerId, currentPassword: string, newPassword: string) {
           const rows = yield* sql`
             SELECT password_hash FROM customer WHERE customer_id = ${customerId}
           `;
@@ -209,11 +206,10 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
 
           yield* Effect.logInfo(`Customer password updated: ${customerId}`);
           return true;
-        }),
+      }),
 
       // Verify JWT token
-      verifyToken: (token: string) =>
-        Effect.gen(function* () {
+      verifyToken: Effect.fn("CustomerAuthService.verifyToken")(function* (token: string) {
           const result = yield* Effect.tryPromise({
             try: () => jose.jwtVerify(token, JWT_SECRET),
             catch: () => new Error("Invalid token"),
@@ -224,7 +220,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
             email: result.payload["email"] as string,
             type: result.payload["type"] as string,
           };
-        }),
+      }),
     };
   }),
   dependencies: [],

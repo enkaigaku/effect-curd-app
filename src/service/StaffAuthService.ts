@@ -52,13 +52,13 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffAuthService", {
+  accessors: true,
   effect: Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
 
     return {
       // Staff login
-      login: (username: string, password: string) =>
-        Effect.gen(function* () {
+      login: Effect.fn("StaffAuthService.login")(function* (username: string, password: string) {
           yield* Effect.logInfo(`Staff login attempt: ${username}`);
 
           const rows = yield* sql`
@@ -108,11 +108,10 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
             storeId: staff.store_id,
             token,
           } as StaffAuthResult;
-        }),
+      }),
 
       // Get staff profile
-      getProfile: (staffId: StaffId) =>
-        Effect.gen(function* () {
+      getProfile: Effect.fn("StaffAuthService.getProfile")(function* (staffId: StaffId) {
           const rows = yield* sql`
             SELECT staff_id, username, email, first_name, last_name, store_id, active
             FROM staff
@@ -131,11 +130,10 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
             storeId: row.store_id,
             isActive: row.active,
           } as StaffProfile;
-        }),
+      }),
 
       // Update password
-      updatePassword: (staffId: StaffId, currentPassword: string, newPassword: string) =>
-        Effect.gen(function* () {
+      updatePassword: Effect.fn("StaffAuthService.updatePassword")(function* (staffId: StaffId, currentPassword: string, newPassword: string) {
           const rows = yield* sql`
             SELECT password_hash FROM staff WHERE staff_id = ${staffId}
           `;
@@ -161,11 +159,10 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
 
           yield* Effect.logInfo(`Staff password updated: ${staffId}`);
           return true;
-        }),
+      }),
 
       // Verify JWT token
-      verifyToken: (token: string) =>
-        Effect.gen(function* () {
+      verifyToken: Effect.fn("StaffAuthService.verifyToken")(function* (token: string) {
           const result = yield* Effect.tryPromise({
             try: () => jose.jwtVerify(token, JWT_SECRET),
             catch: () => new Error("Invalid token"),
@@ -177,11 +174,10 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
             storeId: result.payload["storeId"] as number,
             type: result.payload["type"] as string,
           };
-        }),
+      }),
 
       // List all staff members
-      listStaff: () =>
-        Effect.gen(function* () {
+      listStaff: Effect.fn("StaffAuthService.listStaff")(function* () {
           const rows = yield* sql`
             SELECT staff_id, username, email, first_name, last_name, store_id, active
             FROM staff
@@ -197,7 +193,7 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
             storeId: row.store_id,
             isActive: row.active,
           } as StaffProfile));
-        }),
+      }),
     };
   }),
   dependencies: [],

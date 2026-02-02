@@ -8,43 +8,39 @@ import { FilmId } from "../schema/Ids.js";
 // ============================================================
 
 export class FilmService extends Effect.Service<FilmService>()("FilmService", {
+  accessors: true,
   effect: Effect.gen(function* () {
     const repo = yield* FilmRepository;
 
     return {
       // Get film by ID
-      getFilmById: (filmId: FilmId) =>
-        Effect.gen(function* () {
-          yield* Effect.logDebug(`Getting film by ID: ${filmId}`);
-          const film = yield* repo.findById(filmId);
-          if (!film) {
-            yield* Effect.logWarning(`Film not found: ${filmId}`);
-          }
-          return film;
-        }),
+      getFilmById: Effect.fn("FilmService.getFilmById")(function* (filmId: FilmId) {
+        yield* Effect.logDebug(`Getting film by ID: ${filmId}`);
+        const film = yield* repo.findById(filmId);
+        if (!film) {
+          yield* Effect.logWarning(`Film not found: ${filmId}`);
+        }
+        return film;
+      }),
 
       // Search films with pagination
-      searchFilms: (params: FilmSearchParams) =>
-        Effect.gen(function* () {
-          yield* Effect.logDebug(`Searching films with params: ${JSON.stringify(params)}`);
-          return yield* repo.search(params);
-        }),
+      searchFilms: Effect.fn("FilmService.searchFilms")(function* (params: FilmSearchParams) {
+        yield* Effect.logDebug(`Searching films with params: ${JSON.stringify(params)}`);
+        return yield* repo.search(params);
+      }),
 
       // Get actors for a film
-      getFilmActors: (filmId: FilmId) =>
-        Effect.gen(function* () {
-          yield* Effect.logDebug(`Getting actors for film: ${filmId}`);
-          return yield* repo.getActorsByFilmId(filmId);
-        }),
+      getFilmActors: Effect.fn("FilmService.getFilmActors")(function* (filmId: FilmId) {
+        yield* Effect.logDebug(`Getting actors for film: ${filmId}`);
+        return yield* repo.getActorsByFilmId(filmId);
+      }),
 
       // Get all categories
-      getCategories: () =>
-        Effect.gen(function* () {
-          yield* Effect.logDebug("Getting all categories");
-          return yield* repo.getCategories();
-        }),
+      getCategories: Effect.fn("FilmService.getCategories")(function* () {
+        yield* Effect.logDebug("Getting all categories");
+        return yield* repo.getCategories();
+      }),
     };
   }),
   dependencies: [FilmRepository.Default],
 }) {}
-
