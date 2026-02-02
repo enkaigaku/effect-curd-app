@@ -2,6 +2,7 @@ import { describe, it, expect } from "bun:test";
 import { Effect } from "effect";
 import { InventoryRepository } from "../../src/repository/InventoryRepository.js";
 import { TestDatabaseLayer } from "../utils/testDb.js";
+import { FilmId, StoreId } from "../../src/schema/Ids.js";
 
 // ============================================================
 // InventoryRepository Integration Tests
@@ -21,8 +22,8 @@ describe("InventoryRepository (Integration)", () => {
       );
 
       expect(result).toBeDefined();
-      expect(result?.filmId).toBe(1);
-      expect(result?.storeId).toBe(1);
+      expect(result?.filmId).toBe(1 as FilmId);
+      expect(result?.storeId).toBe(1 as StoreId);
       expect(typeof result?.totalCopies).toBe("number");
     });
   });
@@ -41,7 +42,7 @@ describe("InventoryRepository (Integration)", () => {
 
       expect(result.length).toBeGreaterThan(0);
       result.forEach(item => {
-        expect(item.filmId).toBe(1);
+        expect(item.filmId).toBe(1 as FilmId);
         expect(typeof item.totalCopies).toBe("number");
       });
     });

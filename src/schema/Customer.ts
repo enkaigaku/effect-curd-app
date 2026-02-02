@@ -1,16 +1,17 @@
 import { Schema } from "effect";
+import { CustomerId, StoreId, AddressId } from "./Ids.js";
 
 // ============================================================
 // Customer Schemas
 // ============================================================
 
 export class Customer extends Schema.Class<Customer>("Customer")({
-  customerId: Schema.Number,
-  storeId: Schema.Number,
+  customerId: CustomerId,
+  storeId: StoreId,
   firstName: Schema.String,
   lastName: Schema.String,
   email: Schema.NullOr(Schema.String),
-  addressId: Schema.Number,
+  addressId: AddressId,
   activebool: Schema.Boolean,
   createDate: Schema.Date,
   lastUpdate: Schema.NullOr(Schema.Date),
@@ -19,9 +20,9 @@ export class Customer extends Schema.Class<Customer>("Customer")({
 
 // Customer with full name for display
 export class CustomerInfo extends Schema.Class<CustomerInfo>("CustomerInfo")({
-  customerId: Schema.Number,
+  customerId: CustomerId,
   fullName: Schema.String,
   email: Schema.NullOr(Schema.String),
-  storeId: Schema.Number,
+  storeId: StoreId,
   isActive: Schema.Boolean,
 }) {}

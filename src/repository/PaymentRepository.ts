@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { PaymentDetail, PaymentCreated, CustomerBalance } from "../schema/Payment.js";
+import { PaymentId, CustomerId, RentalId } from "../schema/Ids.js";
 
 // ============================================================
 // Payment Repository
@@ -25,9 +26,9 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           const paymentId = rows[0]?.["payment_id"] as number;
 
           return new PaymentCreated({
-            paymentId,
-            customerId,
-            rentalId,
+            paymentId: paymentId as PaymentId,
+            customerId: customerId as CustomerId,
+            rentalId: rentalId as RentalId,
             amount,
             paymentDate,
           });
@@ -70,7 +71,7 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           const balance = Number(balanceRows[0]?.["balance"] ?? 0);
 
           return new CustomerBalance({
-            customerId,
+            customerId: customerId as CustomerId,
             customerName,
             balance,
           });
@@ -99,10 +100,10 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           `;
 
           return rows.map((row: any) => new PaymentDetail({
-            paymentId: row.payment_id,
-            customerId: row.customer_id,
+            paymentId: row.payment_id as PaymentId,
+            customerId: row.customer_id as CustomerId,
             customerName: row.customer_name,
-            rentalId: row.rental_id,
+            rentalId: row.rental_id as RentalId,
             filmTitle: row.film_title,
             amount: Number(row.amount),
             paymentDate: row.payment_date,
@@ -133,10 +134,10 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
 
           const row = rows[0] as any;
           return new PaymentDetail({
-            paymentId: row.payment_id,
-            customerId: row.customer_id,
+            paymentId: row.payment_id as PaymentId,
+            customerId: row.customer_id as CustomerId,
             customerName: row.customer_name,
-            rentalId: row.rental_id,
+            rentalId: row.rental_id as RentalId,
             filmTitle: row.film_title,
             amount: Number(row.amount),
             paymentDate: row.payment_date,

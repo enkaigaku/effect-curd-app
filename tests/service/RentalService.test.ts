@@ -5,33 +5,34 @@ import { RentalRepository } from "../../src/repository/RentalRepository.js";
 import { InventoryRepository } from "../../src/repository/InventoryRepository.js";
 import { CreateRentalInput, RentalCreated } from "../../src/schema/Rental.js";
 import { CustomerInfo } from "../../src/schema/Customer.js";
+import { CustomerId, StoreId, FilmId, RentalId, InventoryId } from "../../src/schema/Ids.js";
 
 // ============================================================
 // Mock Data
 // ============================================================
 
 const mockCustomerActive = new CustomerInfo({
-  customerId: 1,
+  customerId: 1 as CustomerId,
   fullName: "Test Customer",
   email: "test@example.com",
-  storeId: 1,
+  storeId: 1 as StoreId,
   isActive: true,
 });
 
 const mockCustomerInactive = new CustomerInfo({
-  customerId: 2,
+  customerId: 2 as CustomerId,
   fullName: "Inactive Customer",
   email: "inactive@example.com",
-  storeId: 1,
+  storeId: 1 as StoreId,
   isActive: false,
 });
 
 const mockRentalCreated = new RentalCreated({
-  rentalId: 1,
+  rentalId: 1 as RentalId,
   rentalDate: new Date(),
-  inventoryId: 100,
+  inventoryId: 100 as InventoryId,
   filmTitle: "Test Film",
-  customerId: 1,
+  customerId: 1 as CustomerId,
   dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 });
 
@@ -110,9 +111,9 @@ describe("RentalService", () => {
   describe("createRental", () => {
     it("should create a rental successfully", async () => {
       const input = new CreateRentalInput({
-        filmId: 1,
-        customerId: 1,
-        storeId: 1,
+        filmId: 1 as FilmId,
+        customerId: 1 as CustomerId,
+        storeId: 1 as StoreId,
       });
 
       const result = await Effect.runPromise(
@@ -122,15 +123,15 @@ describe("RentalService", () => {
         }).pipe(Effect.provide(createTestLayer()))
       );
 
-      expect(result.rentalId).toBe(1);
+      expect(result.rentalId).toBe(1 as RentalId);
       expect(result.filmTitle).toBe("Test Film");
     });
 
     it("should fail when customer not found", async () => {
       const input = new CreateRentalInput({
-        filmId: 1,
-        customerId: 999,
-        storeId: 1,
+        filmId: 1 as FilmId,
+        customerId: 999 as CustomerId,
+        storeId: 1 as StoreId,
       });
 
       const result = await Effect.runPromiseExit(
@@ -149,9 +150,9 @@ describe("RentalService", () => {
 
     it("should fail when customer is inactive", async () => {
       const input = new CreateRentalInput({
-        filmId: 1,
-        customerId: 2,
-        storeId: 1,
+        filmId: 1 as FilmId,
+        customerId: 2 as CustomerId,
+        storeId: 1 as StoreId,
       });
 
       const result = await Effect.runPromiseExit(
@@ -170,9 +171,9 @@ describe("RentalService", () => {
 
     it("should fail when no inventory available", async () => {
       const input = new CreateRentalInput({
-        filmId: 1,
-        customerId: 1,
-        storeId: 1,
+        filmId: 1 as FilmId,
+        customerId: 1 as CustomerId,
+        storeId: 1 as StoreId,
       });
 
       const result = await Effect.runPromiseExit(

@@ -3,21 +3,22 @@ import { Effect, Layer, Exit } from "effect";
 import { PaymentService, InvalidPaymentAmountError } from "../../src/service/PaymentService.js";
 import { PaymentRepository } from "../../src/repository/PaymentRepository.js";
 import { CreatePaymentInput, PaymentCreated, CustomerBalance } from "../../src/schema/Payment.js";
+import { PaymentId, CustomerId, RentalId } from "../../src/schema/Ids.js";
 
 // ============================================================
 // Mock Data
 // ============================================================
 
 const mockPaymentCreated = new PaymentCreated({
-  paymentId: 1,
-  customerId: 1,
-  rentalId: 1,
+  paymentId: 1 as PaymentId,
+  customerId: 1 as CustomerId,
+  rentalId: 1 as RentalId,
   amount: 4.99,
   paymentDate: new Date(),
 });
 
 const mockCustomerBalance = new CustomerBalance({
-  customerId: 1,
+  customerId: 1 as CustomerId,
   customerName: "Test Customer",
   balance: 10.99,
 });
@@ -70,8 +71,8 @@ describe("PaymentService", () => {
   describe("createPayment", () => {
     it("should create a payment successfully", async () => {
       const input = new CreatePaymentInput({
-        customerId: 1,
-        rentalId: 1,
+        customerId: 1 as CustomerId,
+        rentalId: 1 as RentalId,
         amount: 4.99,
       });
 
@@ -82,14 +83,14 @@ describe("PaymentService", () => {
         }).pipe(Effect.provide(createTestLayer()))
       );
 
-      expect(result.paymentId).toBe(1);
+      expect(result.paymentId).toBe(1 as PaymentId);
       expect(result.amount).toBe(4.99);
     });
 
     it("should fail with invalid amount (zero)", async () => {
       const input = new CreatePaymentInput({
-        customerId: 1,
-        rentalId: 1,
+        customerId: 1 as CustomerId,
+        rentalId: 1 as RentalId,
         amount: 0,
       });
 
@@ -105,8 +106,8 @@ describe("PaymentService", () => {
 
     it("should fail with negative amount", async () => {
       const input = new CreatePaymentInput({
-        customerId: 1,
-        rentalId: 1,
+        customerId: 1 as CustomerId,
+        rentalId: 1 as RentalId,
         amount: -5,
       });
 
@@ -130,7 +131,7 @@ describe("PaymentService", () => {
         }).pipe(Effect.provide(createTestLayer()))
       );
 
-      expect(result?.customerId).toBe(1);
+      expect(result?.customerId).toBe(1 as CustomerId);
       expect(result?.balance).toBe(10.99);
     });
 

@@ -2,8 +2,8 @@ import { HttpApiBuilder } from "@effect/platform";
 import { Effect } from "effect";
 import { Api, PaymentNotFoundError, InvalidPaymentError, PaymentError } from "../api/index.js";
 import { PaymentService } from "../service/PaymentService.js";
-import { CreatePaymentInput } from "../schema/Payment.js";
-import { CustomerBalance } from "../schema/Payment.js";
+import { CustomerBalance, CreatePaymentInput } from "../schema/Payment.js";
+import { CustomerId } from "../schema/Ids.js";
 import { requireStaff, requireAuth } from "../middleware/auth.js";
 
 // ============================================================
@@ -103,7 +103,7 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
 
         if (!balance) {
           return new CustomerBalance({
-            customerId: path.customerId,
+            customerId: path.customerId as CustomerId,
             customerName: "Unknown",
             balance: 0,
           });

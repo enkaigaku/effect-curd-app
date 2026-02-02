@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { Api, FilmNotFoundError, DatabaseQueryError } from "../api/index.js";
 import { FilmService } from "../service/FilmService.js";
 import { FilmDetail, FilmSearchParams } from "../schema/Film.js";
+import { CategoryId } from "../schema/Ids.js";
 
 // ============================================================
 // Film Handler Implementation
@@ -17,7 +18,7 @@ export const FilmHandler = HttpApiBuilder.group(Api, "films", (handlers) =>
         // Parse URL params (strings) to proper types
         const params = new FilmSearchParams({
           search: urlParams.search,
-          categoryId: urlParams.categoryId ? Number(urlParams.categoryId) : undefined,
+          categoryId: urlParams.categoryId ? Number(urlParams.categoryId) as CategoryId : undefined,
           rating: urlParams.rating as any,
           page: urlParams.page ? Number(urlParams.page) : 1,
           limit: urlParams.limit ? Number(urlParams.limit) : 20,

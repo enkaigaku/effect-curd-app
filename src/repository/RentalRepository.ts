@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { RentalDetail, RentalCreated, RentalReturned } from "../schema/Rental.js";
 import { CustomerInfo } from "../schema/Customer.js";
+import { RentalId, InventoryId, CustomerId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Rental Repository
@@ -44,11 +45,11 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
             const rentalId = insertResult[0]?.["rental_id"] as number;
 
             return new RentalCreated({
-              rentalId,
+              rentalId: rentalId as RentalId,
               rentalDate,
-              inventoryId,
+              inventoryId: inventoryId as InventoryId,
               filmTitle,
-              customerId,
+              customerId: customerId as CustomerId,
               dueDate,
             });
           }),
@@ -96,7 +97,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
             `;
 
             return new RentalReturned({
-              rentalId,
+              rentalId: rentalId as RentalId,
               returnDate,
               rentalDays,
               lateFee,
@@ -130,7 +131,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
 
           const row = rows[0] as any;
           return new RentalDetail({
-            rentalId: row.rental_id,
+            rentalId: row.rental_id as RentalId,
             rentalDate: row.rental_date,
             returnDate: row.return_date,
             filmTitle: row.film_title,
@@ -168,7 +169,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
           return rows.map(
             (row: any) =>
               new RentalDetail({
-                rentalId: row.rental_id,
+                rentalId: row.rental_id as RentalId,
                 rentalDate: row.rental_date,
                 returnDate: row.return_date,
                 filmTitle: row.film_title,
@@ -198,10 +199,10 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
 
           const row = rows[0] as any;
           return new CustomerInfo({
-            customerId: row.customer_id,
+            customerId: row.customer_id as CustomerId,
             fullName: row.full_name,
             email: row.email,
-            storeId: row.store_id,
+            storeId: row.store_id as StoreId,
             isActive: row.is_active,
           });
         }),

@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { Api, StoreNotFoundError, InventoryError } from "../api/index.js";
 import { InventoryService } from "../service/InventoryService.js";
 import { FilmAvailability } from "../schema/Inventory.js";
+import { FilmId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Inventory Handler Implementation
@@ -52,9 +53,9 @@ export const InventoryHandler = HttpApiBuilder.group(Api, "inventory", (handlers
         if (!availability) {
           // Return empty availability if film doesn't exist at store
           return new FilmAvailability({
-            filmId: path.filmId,
+            filmId: path.filmId as FilmId,
             filmTitle: "Unknown",
-            storeId: path.storeId,
+            storeId: path.storeId as StoreId,
             totalCopies: 0,
             availableCopies: 0,
           });

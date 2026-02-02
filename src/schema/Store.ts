@@ -1,19 +1,20 @@
 import { Schema } from "effect";
+import { StoreId, StaffId, AddressId } from "./Ids.js";
 
 // ============================================================
 // Store Schema
 // ============================================================
 
 export class Store extends Schema.Class<Store>("Store")({
-  storeId: Schema.Number,
-  managerStaffId: Schema.Number,
-  addressId: Schema.Number,
+  storeId: StoreId,
+  managerStaffId: StaffId,
+  addressId: AddressId,
   lastUpdate: Schema.Date,
 }) {}
 
 // Store with address info for display
 export class StoreWithAddress extends Schema.Class<StoreWithAddress>("StoreWithAddress")({
-  storeId: Schema.Number,
+  storeId: StoreId,
   address: Schema.String,
   city: Schema.String,
   country: Schema.String,

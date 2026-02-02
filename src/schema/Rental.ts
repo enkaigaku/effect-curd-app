@@ -1,22 +1,23 @@
 import { Schema } from "effect";
+import { RentalId, InventoryId, CustomerId, StaffId, FilmId, StoreId } from "./Ids.js";
 
 // ============================================================
 // Rental Schemas
 // ============================================================
 
 export class Rental extends Schema.Class<Rental>("Rental")({
-  rentalId: Schema.Number,
+  rentalId: RentalId,
   rentalDate: Schema.Date,
-  inventoryId: Schema.Number,
-  customerId: Schema.Number,
+  inventoryId: InventoryId,
+  customerId: CustomerId,
   returnDate: Schema.NullOr(Schema.Date),
-  staffId: Schema.Number,
+  staffId: StaffId,
   lastUpdate: Schema.Date,
 }) {}
 
 // Rental with film and customer info for display
 export class RentalDetail extends Schema.Class<RentalDetail>("RentalDetail")({
-  rentalId: Schema.Number,
+  rentalId: RentalId,
   rentalDate: Schema.Date,
   returnDate: Schema.NullOr(Schema.Date),
   filmTitle: Schema.String,
@@ -28,25 +29,25 @@ export class RentalDetail extends Schema.Class<RentalDetail>("RentalDetail")({
 
 // Input for creating a rental
 export class CreateRentalInput extends Schema.Class<CreateRentalInput>("CreateRentalInput")({
-  filmId: Schema.Number,
-  customerId: Schema.Number,
-  storeId: Schema.Number,
-  staffId: Schema.optionalWith(Schema.Number, { default: () => 1 }),
+  filmId: FilmId,
+  customerId: CustomerId,
+  storeId: StoreId,
+  staffId: Schema.optionalWith(StaffId, { default: () => 1 as StaffId }),
 }) {}
 
 // Rental response after creation
 export class RentalCreated extends Schema.Class<RentalCreated>("RentalCreated")({
-  rentalId: Schema.Number,
+  rentalId: RentalId,
   rentalDate: Schema.Date,
-  inventoryId: Schema.Number,
+  inventoryId: InventoryId,
   filmTitle: Schema.String,
-  customerId: Schema.Number,
+  customerId: CustomerId,
   dueDate: Schema.Date,
 }) {}
 
 // Return rental response
 export class RentalReturned extends Schema.Class<RentalReturned>("RentalReturned")({
-  rentalId: Schema.Number,
+  rentalId: RentalId,
   returnDate: Schema.Date,
   rentalDays: Schema.Number,
   lateFee: Schema.Number,

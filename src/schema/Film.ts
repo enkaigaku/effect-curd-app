@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { FilmId, CategoryId } from "./Ids.js";
 
 // ============================================================
 // Film Schemas
@@ -10,7 +11,7 @@ export type MpaaRating = typeof MpaaRating.Type;
 
 // Film entity
 export class Film extends Schema.Class<Film>("Film")({
-  filmId: Schema.Number,
+  filmId: FilmId,
   title: Schema.String,
   description: Schema.NullOr(Schema.String),
   releaseYear: Schema.NullOr(Schema.Number),
@@ -41,7 +42,7 @@ export class FilmDetail extends Schema.Class<FilmDetail>("FilmDetail")({
 // Film search parameters
 export class FilmSearchParams extends Schema.Class<FilmSearchParams>("FilmSearchParams")({
   search: Schema.optional(Schema.String),
-  categoryId: Schema.optional(Schema.Number),
+  categoryId: Schema.optional(CategoryId),
   rating: Schema.optional(MpaaRating),
   page: Schema.optionalWith(Schema.Number, { default: () => 1 }),
   limit: Schema.optionalWith(Schema.Number, { default: () => 20 }),

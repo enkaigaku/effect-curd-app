@@ -1,24 +1,25 @@
 import { Schema } from "effect";
+import { PaymentId, CustomerId, StaffId, RentalId } from "./Ids.js";
 
 // ============================================================
 // Payment Schemas
 // ============================================================
 
 export class Payment extends Schema.Class<Payment>("Payment")({
-  paymentId: Schema.Number,
-  customerId: Schema.Number,
-  staffId: Schema.Number,
-  rentalId: Schema.Number,
+  paymentId: PaymentId,
+  customerId: CustomerId,
+  staffId: StaffId,
+  rentalId: RentalId,
   amount: Schema.Number,
   paymentDate: Schema.Date,
 }) {}
 
 // Payment with rental info for display
 export class PaymentDetail extends Schema.Class<PaymentDetail>("PaymentDetail")({
-  paymentId: Schema.Number,
-  customerId: Schema.Number,
+  paymentId: PaymentId,
+  customerId: CustomerId,
   customerName: Schema.String,
-  rentalId: Schema.Number,
+  rentalId: RentalId,
   filmTitle: Schema.String,
   amount: Schema.Number,
   paymentDate: Schema.Date,
@@ -26,24 +27,24 @@ export class PaymentDetail extends Schema.Class<PaymentDetail>("PaymentDetail")(
 
 // Input for creating a payment
 export class CreatePaymentInput extends Schema.Class<CreatePaymentInput>("CreatePaymentInput")({
-  customerId: Schema.Number,
-  rentalId: Schema.Number,
+  customerId: CustomerId,
+  rentalId: RentalId,
   amount: Schema.Number,
-  staffId: Schema.optionalWith(Schema.Number, { default: () => 1 }),
+  staffId: Schema.optionalWith(StaffId, { default: () => 1 as StaffId }),
 }) {}
 
 // Payment response after creation
 export class PaymentCreated extends Schema.Class<PaymentCreated>("PaymentCreated")({
-  paymentId: Schema.Number,
-  customerId: Schema.Number,
-  rentalId: Schema.Number,
+  paymentId: PaymentId,
+  customerId: CustomerId,
+  rentalId: RentalId,
   amount: Schema.Number,
   paymentDate: Schema.Date,
 }) {}
 
 // Customer balance response
 export class CustomerBalance extends Schema.Class<CustomerBalance>("CustomerBalance")({
-  customerId: Schema.Number,
+  customerId: CustomerId,
   customerName: Schema.String,
   balance: Schema.Number,
 }) {}
