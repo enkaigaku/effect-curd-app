@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { FilmRepository } from "../repository/FilmRepository.js";
 import { FilmSearchParams }from "../schema/Film.js";
+import { FilmId } from "../schema/Ids.js";
 
 // ============================================================
 // Film Service
@@ -12,7 +13,7 @@ export class FilmService extends Effect.Service<FilmService>()("FilmService", {
 
     return {
       // Get film by ID
-      getFilmById: (filmId: number) =>
+      getFilmById: (filmId: FilmId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting film by ID: ${filmId}`);
           const film = yield* repo.findById(filmId);
@@ -30,7 +31,7 @@ export class FilmService extends Effect.Service<FilmService>()("FilmService", {
         }),
 
       // Get actors for a film
-      getFilmActors: (filmId: number) =>
+      getFilmActors: (filmId: FilmId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting actors for film: ${filmId}`);
           return yield* repo.getActorsByFilmId(filmId);
@@ -46,3 +47,4 @@ export class FilmService extends Effect.Service<FilmService>()("FilmService", {
   }),
   dependencies: [FilmRepository.Default],
 }) {}
+

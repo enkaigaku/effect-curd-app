@@ -2,6 +2,7 @@ import { Effect, Data } from "effect";
 import * as bcrypt from "bcrypt";
 import * as jose from "jose";
 import { SqlClient } from "@effect/sql";
+import { StaffId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Staff Auth Errors
@@ -24,21 +25,21 @@ export class StaffInactiveError extends Data.TaggedError("StaffInactiveError")<{
 // ============================================================
 
 export interface StaffAuthResult {
-  staffId: number;
+  staffId: StaffId;
   username: string;
   firstName: string;
   lastName: string;
-  storeId: number;
+  storeId: StoreId;
   token: string;
 }
 
 export interface StaffProfile {
-  staffId: number;
+  staffId: StaffId;
   username: string;
   email: string | null;
   firstName: string;
   lastName: string;
-  storeId: number;
+  storeId: StoreId;
   isActive: boolean;
 }
 
@@ -110,7 +111,7 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
         }),
 
       // Get staff profile
-      getProfile: (staffId: number) =>
+      getProfile: (staffId: StaffId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT staff_id, username, email, first_name, last_name, store_id, active
@@ -133,7 +134,7 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
         }),
 
       // Update password
-      updatePassword: (staffId: number, currentPassword: string, newPassword: string) =>
+      updatePassword: (staffId: StaffId, currentPassword: string, newPassword: string) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT password_hash FROM staff WHERE staff_id = ${staffId}

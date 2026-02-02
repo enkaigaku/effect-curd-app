@@ -1,13 +1,14 @@
 import { Effect, Data } from "effect";
 import { PaymentRepository } from "../repository/PaymentRepository.js";
 import { CreatePaymentInput } from "../schema/Payment.js";
+import { RentalId, CustomerId, PaymentId, StaffId } from "../schema/Ids.js";
 
 // ============================================================
 // Payment Service Errors
 // ============================================================
 
 export class RentalNotFoundError extends Data.TaggedError("RentalNotFoundError")<{
-  readonly rentalId: number;
+  readonly rentalId: RentalId;
 }> {}
 
 export class InvalidPaymentAmountError extends Data.TaggedError("InvalidPaymentAmountError")<{
@@ -36,7 +37,7 @@ export class PaymentService extends Effect.Service<PaymentService>()("PaymentSer
             input.customerId,
             input.rentalId,
             input.amount,
-            input.staffId ?? 1
+            input.staffId ?? (1 as StaffId)
           );
 
           yield* Effect.logInfo(`Payment created: id=${payment.paymentId}`);
@@ -44,21 +45,21 @@ export class PaymentService extends Effect.Service<PaymentService>()("PaymentSer
         }),
 
       // Get customer balance
-      getCustomerBalance: (customerId: number) =>
+      getCustomerBalance: (customerId: CustomerId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting balance for customer: ${customerId}`);
           return yield* repo.getCustomerBalance(customerId);
         }),
 
       // Get customer payment history
-      getCustomerPayments: (customerId: number, limit: number = 20) =>
+      getCustomerPayments: (customerId: CustomerId, limit: number = 20) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting payments for customer: ${customerId}`);
           return yield* repo.getCustomerPayments(customerId, limit);
         }),
 
       // Get payment by ID
-      getPaymentById: (paymentId: number) =>
+      getPaymentById: (paymentId: PaymentId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting payment: ${paymentId}`);
           return yield* repo.findById(paymentId);
@@ -67,3 +68,4 @@ export class PaymentService extends Effect.Service<PaymentService>()("PaymentSer
   }),
   dependencies: [PaymentRepository.Default],
 }) {}
+

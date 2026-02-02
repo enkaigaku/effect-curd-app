@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { InventoryRepository } from "../repository/InventoryRepository.js";
+import { FilmId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Inventory Service
@@ -11,21 +12,21 @@ export class InventoryService extends Effect.Service<InventoryService>()("Invent
 
     return {
       // Check film availability at a store
-      checkAvailability: (filmId: number, storeId: number) =>
+      checkAvailability: (filmId: FilmId, storeId: StoreId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Checking availability: film=${filmId}, store=${storeId}`);
           return yield* repo.getFilmAvailability(filmId, storeId);
         }),
 
       // Get availability across all stores
-      checkAvailabilityAllStores: (filmId: number) =>
+      checkAvailabilityAllStores: (filmId: FilmId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Checking availability for film=${filmId} at all stores`);
           return yield* repo.getFilmAvailabilityAllStores(filmId);
         }),
 
       // Find available inventory for rental
-      findAvailableInventory: (filmId: number, storeId: number) =>
+      findAvailableInventory: (filmId: FilmId, storeId: StoreId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Finding available inventory: film=${filmId}, store=${storeId}`);
           return yield* repo.findAvailableInventory(filmId, storeId);
@@ -39,7 +40,7 @@ export class InventoryService extends Effect.Service<InventoryService>()("Invent
         }),
 
       // Get store by ID
-      getStoreById: (storeId: number) =>
+      getStoreById: (storeId: StoreId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting store: ${storeId}`);
           return yield* repo.getStoreById(storeId);
@@ -48,3 +49,4 @@ export class InventoryService extends Effect.Service<InventoryService>()("Invent
   }),
   dependencies: [InventoryRepository.Default],
 }) {}
+

@@ -3,6 +3,7 @@ import { SqlClient } from "@effect/sql";
 import { Film, FilmSearchParams, PaginatedFilms } from "../schema/Film.js";
 import { ActorWithName } from "../schema/Actor.js";
 import { Category } from "../schema/Category.js";
+import { FilmId } from "../schema/Ids.js";
 
 // ============================================================
 // Film Repository
@@ -14,7 +15,7 @@ export class FilmRepository extends Effect.Service<FilmRepository>()("FilmReposi
 
     return {
       // Find film by ID with language info
-      findById: (filmId: number) =>
+      findById: (filmId: FilmId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 
@@ -206,7 +207,7 @@ export class FilmRepository extends Effect.Service<FilmRepository>()("FilmReposi
         }),
 
       // Get actors for a film
-      getActorsByFilmId: (filmId: number) =>
+      getActorsByFilmId: (filmId: FilmId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 

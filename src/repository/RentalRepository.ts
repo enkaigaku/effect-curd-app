@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { RentalDetail, RentalCreated, RentalReturned } from "../schema/Rental.js";
 import { CustomerInfo } from "../schema/Customer.js";
-import { RentalId, InventoryId, CustomerId, StoreId } from "../schema/Ids.js";
+import { RentalId, InventoryId, CustomerId, StoreId, StaffId } from "../schema/Ids.js";
 
 // ============================================================
 // Rental Repository
@@ -13,8 +13,8 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
     const sql = yield* SqlClient.SqlClient;
 
     return {
-      // Create a new rental with transaction
-      createRental: (inventoryId: number, customerId: number, staffId: number) =>
+      // Create a new rental
+      createRental: (inventoryId: InventoryId, customerId: CustomerId, staffId: StaffId) =>
         sql.withTransaction(
           Effect.gen(function* () {
             // Get film info for the inventory item
@@ -55,8 +55,8 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
           }),
         ),
 
-      // Return a rental
-      returnRental: (rentalId: number) =>
+      // Return a rental (mark as returned)
+      returnRental: (rentalId: RentalId) =>
         sql.withTransaction(
           Effect.gen(function* () {
             // Get rental info
@@ -105,8 +105,8 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
           }),
         ),
 
-      // Get rental by ID with details
-      findById: (rentalId: number) =>
+      // Find rental by ID
+      findById: (rentalId: RentalId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT
@@ -142,8 +142,8 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
           });
         }),
 
-      // Get customer's rental history
-      getCustomerRentals: (customerId: number, limit: number = 20) =>
+      // Get customer rentals with pagination
+      getCustomerRentals: (customerId: CustomerId, limit: number = 20) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT
@@ -182,7 +182,7 @@ export class RentalRepository extends Effect.Service<RentalRepository>()("Rental
         }),
 
       // Get customer info
-      getCustomer: (customerId: number) =>
+      getCustomer: (customerId: CustomerId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT

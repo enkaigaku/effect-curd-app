@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { PaymentDetail, PaymentCreated, CustomerBalance } from "../schema/Payment.js";
-import { PaymentId, CustomerId, RentalId } from "../schema/Ids.js";
+import { PaymentId, CustomerId, RentalId, StaffId } from "../schema/Ids.js";
 
 // ============================================================
 // Payment Repository
@@ -12,8 +12,8 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
     const sql = yield* SqlClient.SqlClient;
 
     return {
-      // Create a payment
-      createPayment: (customerId: number, rentalId: number, amount: number, staffId: number) =>
+      // Create a new payment
+      createPayment: (customerId: CustomerId, rentalId: RentalId, amount: number, staffId: StaffId) =>
         Effect.gen(function* () {
           const paymentDate = new Date();
 
@@ -34,8 +34,8 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           });
         }),
 
-      // Get customer balance (total rentals - total payments)
-      getCustomerBalance: (customerId: number) =>
+      // Get customer balance (total unpaid)
+      getCustomerBalance: (customerId: CustomerId) =>
         Effect.gen(function* () {
           // Get customer name
           const customerRows = yield* sql`
@@ -77,8 +77,8 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           });
         }),
 
-      // Get customer payment history
-      getCustomerPayments: (customerId: number, limit: number = 20) =>
+      // Get customer payments
+      getCustomerPayments: (customerId: CustomerId, limit: number = 20) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 
@@ -110,8 +110,8 @@ export class PaymentRepository extends Effect.Service<PaymentRepository>()("Paym
           }));
         }),
 
-      // Get payment by ID
-      findById: (paymentId: number) =>
+      // Find payment by ID
+      findById: (paymentId: PaymentId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 

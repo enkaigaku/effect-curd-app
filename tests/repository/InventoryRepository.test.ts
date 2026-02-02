@@ -14,7 +14,7 @@ describe("InventoryRepository (Integration)", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const repo = yield* InventoryRepository;
-          return yield* repo.getFilmAvailability(1, 1);
+          return yield* repo.getFilmAvailability(1 as FilmId, 1 as StoreId);
         }).pipe(
           Effect.provide(InventoryRepository.Default),
           Effect.provide(TestDatabaseLayer)
@@ -33,7 +33,7 @@ describe("InventoryRepository (Integration)", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const repo = yield* InventoryRepository;
-          return yield* repo.getFilmAvailabilityAllStores(1);
+          return yield* repo.getFilmAvailabilityAllStores(1 as FilmId);
         }).pipe(
           Effect.provide(InventoryRepository.Default),
           Effect.provide(TestDatabaseLayer)
@@ -71,7 +71,7 @@ describe("InventoryRepository (Integration)", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const repo = yield* InventoryRepository;
-          return yield* repo.findAvailableInventory(1, 1);
+          return yield* repo.findAvailableInventory(1 as FilmId, 1 as StoreId);
         }).pipe(
           Effect.provide(InventoryRepository.Default),
           Effect.provide(TestDatabaseLayer)

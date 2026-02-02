@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { SqlClient } from "@effect/sql";
 import { FilmAvailability } from "../schema/Inventory.js";
 import { StoreWithAddress } from "../schema/Store.js";
+import { FilmId, StoreId, InventoryId } from "../schema/Ids.js";
 
 // ============================================================
 // Inventory Repository
@@ -13,7 +14,7 @@ export class InventoryRepository extends Effect.Service<InventoryRepository>()("
 
     return {
       // Check film availability at a specific store
-      getFilmAvailability: (filmId: number, storeId: number) =>
+      getFilmAvailability: (filmId: FilmId, storeId: StoreId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 
@@ -43,7 +44,7 @@ export class InventoryRepository extends Effect.Service<InventoryRepository>()("
         }),
 
       // Get all available inventory for a film across all stores
-      getFilmAvailabilityAllStores: (filmId: number) =>
+      getFilmAvailabilityAllStores: (filmId: FilmId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 
@@ -71,7 +72,7 @@ export class InventoryRepository extends Effect.Service<InventoryRepository>()("
         }),
 
       // Find an available inventory item for rental
-      findAvailableInventory: (filmId: number, storeId: number) =>
+      findAvailableInventory: (filmId: FilmId, storeId: StoreId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT inventory_id
@@ -82,7 +83,7 @@ export class InventoryRepository extends Effect.Service<InventoryRepository>()("
             LIMIT 1
           `;
 
-          return rows[0]?.["inventory_id"] as number | undefined;
+          return rows[0]?.["inventory_id"] as InventoryId | undefined;
         }),
 
       // Get all stores with address info
@@ -113,7 +114,7 @@ export class InventoryRepository extends Effect.Service<InventoryRepository>()("
         }),
 
       // Get store by ID
-      getStoreById: (storeId: number) =>
+      getStoreById: (storeId: StoreId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT 

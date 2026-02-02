@@ -3,7 +3,7 @@ import { Effect, Layer, Exit } from "effect";
 import { PaymentService, InvalidPaymentAmountError } from "../../src/service/PaymentService.js";
 import { PaymentRepository } from "../../src/repository/PaymentRepository.js";
 import { CreatePaymentInput, PaymentCreated, CustomerBalance } from "../../src/schema/Payment.js";
-import { PaymentId, CustomerId, RentalId } from "../../src/schema/Ids.js";
+import { PaymentId, CustomerId, RentalId, StaffId } from "../../src/schema/Ids.js";
 
 // ============================================================
 // Mock Data
@@ -51,11 +51,11 @@ const createTestLayer = (overrides: {
             if (input.amount <= 0) {
               return yield* Effect.fail(new InvalidPaymentAmountError({ amount: input.amount }));
             }
-            return yield* repo.createPayment(input.customerId, input.rentalId, input.amount, input.staffId ?? 1);
+            return yield* repo.createPayment(input.customerId, input.rentalId, input.amount, input.staffId ?? 1 as StaffId);
           }),
-        getCustomerBalance: (customerId: number) => repo.getCustomerBalance(customerId),
-        getCustomerPayments: (customerId: number) => repo.getCustomerPayments(customerId, 20),
-        getPaymentById: (paymentId: number) => repo.findById(paymentId),
+        getCustomerBalance: (customerId: CustomerId) => repo.getCustomerBalance(customerId),
+        getCustomerPayments: (customerId: CustomerId) => repo.getCustomerPayments(customerId, 20),
+        getPaymentById: (paymentId: PaymentId) => repo.findById(paymentId),
       };
     })
   ).pipe(Layer.provide(MockPaymentRepo));
@@ -127,7 +127,7 @@ describe("PaymentService", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const service = yield* PaymentService;
-          return yield* service.getCustomerBalance(1);
+          return yield* service.getCustomerBalance(1 as CustomerId);
         }).pipe(Effect.provide(createTestLayer()))
       );
 
@@ -139,7 +139,7 @@ describe("PaymentService", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const service = yield* PaymentService;
-          return yield* service.getCustomerBalance(999);
+          return yield* service.getCustomerBalance(999 as CustomerId);
         }).pipe(
           Effect.provide(createTestLayer({
             getCustomerBalance: () => Effect.succeed(undefined),

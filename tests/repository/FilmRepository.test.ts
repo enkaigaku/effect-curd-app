@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { FilmRepository } from "../../src/repository/FilmRepository.js";
 import { FilmSearchParams } from "../../src/schema/Film.js";
 import { TestDatabaseLayer } from "../utils/testDb.js";
+import { FilmId } from "../../src/schema/Ids.js";
 
 // ============================================================
 // FilmRepository Integration Tests
@@ -14,7 +15,7 @@ describe("FilmRepository (Integration)", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const repo = yield* FilmRepository;
-          return yield* repo.findById(1);
+          return yield* repo.findById(1 as FilmId);
         }).pipe(
           Effect.provide(FilmRepository.Default),
           Effect.provide(TestDatabaseLayer)
@@ -30,7 +31,7 @@ describe("FilmRepository (Integration)", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const repo = yield* FilmRepository;
-          return yield* repo.findById(99999);
+          return yield* repo.findById(99999 as FilmId);
         }).pipe(
           Effect.provide(FilmRepository.Default),
           Effect.provide(TestDatabaseLayer)

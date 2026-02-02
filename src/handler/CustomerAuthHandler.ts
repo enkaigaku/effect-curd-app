@@ -4,6 +4,7 @@ import { Api, CustomerAuthError, CustomerEmailExistsError } from "../api/index.j
 import { CustomerAuthService } from "../service/CustomerAuthService.js";
 import { CustomerAuthResponse, CustomerProfileResponse } from "../api/CustomerAuthApi.js";
 import { requireCustomer } from "../middleware/auth.js";
+import { CustomerId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Customer Auth Handler Implementation
@@ -43,7 +44,7 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
           payload.password,
           payload.firstName,
           payload.lastName,
-          payload.storeId
+          payload.storeId as StoreId
         );
 
         return new CustomerAuthResponse({
@@ -77,7 +78,7 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
         }
 
         const authService = yield* CustomerAuthService;
-        const profile = yield* authService.getProfile(path.customerId);
+        const profile = yield* authService.getProfile(path.customerId as CustomerId);
 
         if (!profile) {
           return yield* Effect.fail(new CustomerAuthError({ message: "Customer not found" }));
@@ -113,7 +114,7 @@ export const CustomerAuthHandler = HttpApiBuilder.group(Api, "customer-auth", (h
 
         const authService = yield* CustomerAuthService;
         yield* authService.updatePassword(
-          path.customerId,
+          path.customerId as CustomerId,
           payload.currentPassword,
           payload.newPassword
         );

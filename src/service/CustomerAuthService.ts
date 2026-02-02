@@ -2,6 +2,7 @@ import { Effect, Data } from "effect";
 import * as bcrypt from "bcrypt";
 import * as jose from "jose";
 import { SqlClient } from "@effect/sql";
+import { CustomerId, StoreId } from "../schema/Ids.js";
 
 // ============================================================
 // Customer Auth Errors
@@ -24,7 +25,7 @@ export class EmailAlreadyExistsError extends Data.TaggedError("EmailAlreadyExist
 // ============================================================
 
 export interface CustomerAuthResult {
-  customerId: number;
+  customerId: CustomerId;
   email: string;
   firstName: string;
   lastName: string;
@@ -32,11 +33,11 @@ export interface CustomerAuthResult {
 }
 
 export interface CustomerProfile {
-  customerId: number;
+  customerId: CustomerId;
   email: string;
   firstName: string;
   lastName: string;
-  storeId: number;
+  storeId: StoreId;
   isActive: boolean;
   createDate: Date;
 }
@@ -107,7 +108,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
         }),
 
       // Customer registration (for new customers without full address)
-      register: (email: string, password: string, firstName: string, lastName: string, storeId: number = 1) =>
+      register: (email: string, password: string, firstName: string, lastName: string, storeId: StoreId = 1 as StoreId) =>
         Effect.gen(function* () {
           yield* Effect.logInfo(`Customer registration: ${email}`);
 
@@ -158,7 +159,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
         }),
 
       // Get customer profile
-      getProfile: (customerId: number) =>
+      getProfile: (customerId: CustomerId) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT customer_id, email, first_name, last_name, store_id, activebool, create_date
@@ -181,7 +182,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
         }),
 
       // Update password
-      updatePassword: (customerId: number, currentPassword: string, newPassword: string) =>
+      updatePassword: (customerId: CustomerId, currentPassword: string, newPassword: string) =>
         Effect.gen(function* () {
           const rows = yield* sql`
             SELECT password_hash FROM customer WHERE customer_id = ${customerId}

@@ -43,7 +43,7 @@ const mockRentalCreated = new RentalCreated({
 const createTestLayer = (overrides: {
   getCustomer?: () => Effect.Effect<CustomerInfo | undefined>;
   createRental?: () => Effect.Effect<RentalCreated>;
-  findAvailableInventory?: () => Effect.Effect<number | undefined>;
+  findAvailableInventory?: () => Effect.Effect<InventoryId | undefined>;
 } = {}) => {
   const MockRentalRepo = Layer.succeed(RentalRepository, {
     _tag: "RentalRepository" as const,
@@ -58,7 +58,7 @@ const createTestLayer = (overrides: {
     _tag: "InventoryRepository" as const,
     getFilmAvailability: () => Effect.succeed(undefined),
     getFilmAvailabilityAllStores: () => Effect.succeed([]),
-    findAvailableInventory: overrides.findAvailableInventory ?? (() => Effect.succeed(100)),
+    findAvailableInventory: overrides.findAvailableInventory ?? (() => Effect.succeed(100 as InventoryId)),
     getStores: () => Effect.succeed([]),
     getStoreById: () => Effect.succeed(undefined),
   });

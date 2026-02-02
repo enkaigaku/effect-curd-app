@@ -22,7 +22,7 @@ export const InventoryHandler = HttpApiBuilder.group(Api, "inventory", (handlers
     .handle("storeById", ({ path }) =>
       Effect.gen(function* () {
         const inventoryService = yield* InventoryService;
-        const store = yield* inventoryService.getStoreById(path.storeId);
+        const store = yield* inventoryService.getStoreById(path.storeId as StoreId);
 
         if (!store) {
           return yield* Effect.fail(
@@ -40,7 +40,7 @@ export const InventoryHandler = HttpApiBuilder.group(Api, "inventory", (handlers
     .handle("filmAvailability", ({ path }) =>
       Effect.gen(function* () {
         const inventoryService = yield* InventoryService;
-        return yield* inventoryService.checkAvailabilityAllStores(path.filmId);
+        return yield* inventoryService.checkAvailabilityAllStores(path.filmId as FilmId);
       }).pipe(
         Effect.mapError(() => new InventoryError({ message: "Failed to check availability" }))
       )
@@ -48,7 +48,7 @@ export const InventoryHandler = HttpApiBuilder.group(Api, "inventory", (handlers
     .handle("filmAvailabilityAtStore", ({ path }) =>
       Effect.gen(function* () {
         const inventoryService = yield* InventoryService;
-        const availability = yield* inventoryService.checkAvailability(path.filmId, path.storeId);
+        const availability = yield* inventoryService.checkAvailability(path.filmId as FilmId, path.storeId as StoreId);
 
         if (!availability) {
           // Return empty availability if film doesn't exist at store

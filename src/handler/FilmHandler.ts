@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { Api, FilmNotFoundError, DatabaseQueryError } from "../api/index.js";
 import { FilmService } from "../service/FilmService.js";
 import { FilmDetail, FilmSearchParams } from "../schema/Film.js";
-import { CategoryId } from "../schema/Ids.js";
+import { CategoryId, FilmId } from "../schema/Ids.js";
 
 // ============================================================
 // Film Handler Implementation
@@ -32,7 +32,7 @@ export const FilmHandler = HttpApiBuilder.group(Api, "films", (handlers) =>
     .handle("getById", ({ path }) =>
       Effect.gen(function* () {
         const filmService = yield* FilmService;
-        const film = yield* filmService.getFilmById(path.filmId);
+        const film = yield* filmService.getFilmById(path.filmId as FilmId);
 
         if (!film) {
           return yield* Effect.fail(
@@ -66,7 +66,7 @@ export const FilmHandler = HttpApiBuilder.group(Api, "films", (handlers) =>
     .handle("getActors", ({ path }) =>
       Effect.gen(function* () {
         const filmService = yield* FilmService;
-        return yield* filmService.getFilmActors(path.filmId);
+        return yield* filmService.getFilmActors(path.filmId as FilmId);
       }).pipe(
         Effect.mapError(() => new DatabaseQueryError({ message: "Failed to fetch actors" }))
       )

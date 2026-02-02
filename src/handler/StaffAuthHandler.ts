@@ -4,6 +4,7 @@ import { Api, StaffAuthError } from "../api/index.js";
 import { StaffAuthService } from "../service/StaffAuthService.js";
 import { StaffAuthResponse, StaffProfileResponse } from "../api/StaffAuthApi.js";
 import { requireStaff } from "../middleware/auth.js";
+import { StaffId } from "../schema/Ids.js";
 
 // ============================================================
 // Staff Auth Handler Implementation
@@ -46,7 +47,7 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
         
         // Only allow accessing own profile (or any profile for staff)
         const authService = yield* StaffAuthService;
-        const profile = yield* authService.getProfile(path.staffId);
+        const profile = yield* authService.getProfile(path.staffId as StaffId);
 
         if (!profile) {
           return yield* Effect.fail(new StaffAuthError({ message: "Staff not found" }));
@@ -83,7 +84,7 @@ export const StaffAuthHandler = HttpApiBuilder.group(Api, "staff-auth", (handler
 
         const authService = yield* StaffAuthService;
         yield* authService.updatePassword(
-          path.staffId,
+          path.staffId as StaffId,
           payload.currentPassword,
           payload.newPassword
         );

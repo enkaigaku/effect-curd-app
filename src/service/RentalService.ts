@@ -2,30 +2,31 @@ import { Effect, Data } from "effect";
 import { RentalRepository } from "../repository/RentalRepository.js";
 import { InventoryRepository } from "../repository/InventoryRepository.js";
 import { CreateRentalInput } from "../schema/Rental.js";
+import { CustomerId, FilmId, StoreId, RentalId, StaffId } from "../schema/Ids.js";
 
 // ============================================================
 // Rental Service Errors (Data.TaggedError)
 // ============================================================
 
 export class CustomerNotFoundError extends Data.TaggedError("CustomerNotFoundError")<{
-  readonly customerId: number;
+  readonly customerId: CustomerId;
 }> {}
 
 export class CustomerInactiveError extends Data.TaggedError("CustomerInactiveError")<{
-  readonly customerId: number;
+  readonly customerId: CustomerId;
 }> {}
 
 export class NoInventoryAvailableError extends Data.TaggedError("NoInventoryAvailableError")<{
-  readonly filmId: number;
-  readonly storeId: number;
+  readonly filmId: FilmId;
+  readonly storeId: StoreId;
 }> {}
 
 export class RentalNotFoundError extends Data.TaggedError("RentalNotFoundError")<{
-  readonly rentalId: number;
+  readonly rentalId: RentalId;
 }> {}
 
 export class RentalAlreadyReturnedError extends Data.TaggedError("RentalAlreadyReturnedError")<{
-  readonly rentalId: number;
+  readonly rentalId: RentalId;
 }> {}
 
 // ============================================================
@@ -71,7 +72,7 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
           const rental = yield* rentalRepo.createRental(
             inventoryId,
             input.customerId,
-            input.staffId ?? 1,
+            input.staffId ?? (1 as StaffId),
           );
 
           yield* Effect.logInfo(`Rental created: id=${rental.rentalId}`);
@@ -79,7 +80,7 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
         }),
 
       // Return a rental
-      returnRental: (rentalId: number) =>
+      returnRental: (rentalId: RentalId) =>
         Effect.gen(function* () {
           yield* Effect.logInfo(`Processing return: rentalId=${rentalId}`);
 
@@ -101,21 +102,21 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
         }),
 
       // Get rental details
-      getRentalById: (rentalId: number) =>
+      getRentalById: (rentalId: RentalId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting rental: ${rentalId}`);
           return yield* rentalRepo.findById(rentalId);
         }),
 
       // Get customer rental history
-      getCustomerRentals: (customerId: number, limit: number = 20) =>
+      getCustomerRentals: (customerId: CustomerId, limit: number = 20) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting rentals for customer: ${customerId}`);
           return yield* rentalRepo.getCustomerRentals(customerId, limit);
         }),
 
       // Get customer info
-      getCustomer: (customerId: number) =>
+      getCustomer: (customerId: CustomerId) =>
         Effect.gen(function* () {
           yield* Effect.logDebug(`Getting customer: ${customerId}`);
           return yield* rentalRepo.getCustomer(customerId);
@@ -124,3 +125,4 @@ export class RentalService extends Effect.Service<RentalService>()("RentalServic
   }),
   dependencies: [RentalRepository.Default, InventoryRepository.Default],
 }) {}
+

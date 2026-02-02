@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { Api, PaymentNotFoundError, InvalidPaymentError, PaymentError } from "../api/index.js";
 import { PaymentService } from "../service/PaymentService.js";
 import { CustomerBalance, CreatePaymentInput } from "../schema/Payment.js";
-import { CustomerId } from "../schema/Ids.js";
+import { CustomerId, PaymentId } from "../schema/Ids.js";
 import { requireStaff, requireAuth } from "../middleware/auth.js";
 
 // ============================================================
@@ -46,7 +46,7 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         yield* requireAuth;
         
         const paymentService = yield* PaymentService;
-        const payment = yield* paymentService.getPaymentById(path.paymentId);
+        const payment = yield* paymentService.getPaymentById(path.paymentId as PaymentId);
 
         if (!payment) {
           return yield* Effect.fail(
@@ -76,7 +76,7 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         }
         
         const paymentService = yield* PaymentService;
-        return yield* paymentService.getCustomerPayments(path.customerId);
+        return yield* paymentService.getCustomerPayments(path.customerId as CustomerId);
       }).pipe(
         Effect.mapError((err: any) => {
           if (err instanceof Error && err.message.includes("Authorization")) {
@@ -99,7 +99,7 @@ export const PaymentHandler = HttpApiBuilder.group(Api, "payments", (handlers) =
         }
         
         const paymentService = yield* PaymentService;
-        const balance = yield* paymentService.getCustomerBalance(path.customerId);
+        const balance = yield* paymentService.getCustomerBalance(path.customerId as CustomerId);
 
         if (!balance) {
           return new CustomerBalance({

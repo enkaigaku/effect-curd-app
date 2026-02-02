@@ -4,6 +4,7 @@ import { Api, RentalNotFoundError as ApiRentalNotFoundError, CustomerNotFoundErr
 import { RentalService } from "../service/RentalService.js";
 import { CreateRentalInput } from "../schema/Rental.js";
 import { requireStaff, requireAuth } from "../middleware/auth.js";
+import { RentalId, CustomerId } from "../schema/Ids.js";
 
 // ============================================================
 // Rental Handler Implementation
@@ -61,7 +62,7 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
         yield* requireStaff;
         
         const rentalService = yield* RentalService;
-        return yield* rentalService.returnRental(path.rentalId);
+        return yield* rentalService.returnRental(path.rentalId as RentalId);
       }).pipe(
         Effect.mapError((err: any) => {
           if (err instanceof Error && err.message.includes("Authorization")) {
@@ -84,7 +85,7 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
         yield* requireAuth;
         
         const rentalService = yield* RentalService;
-        const rental = yield* rentalService.getRentalById(path.rentalId);
+        const rental = yield* rentalService.getRentalById(path.rentalId as RentalId);
 
         if (!rental) {
           return yield* Effect.fail(
@@ -110,7 +111,7 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
         }
         
         const rentalService = yield* RentalService;
-        return yield* rentalService.getCustomerRentals(path.customerId);
+        return yield* rentalService.getCustomerRentals(path.customerId as CustomerId);
       }).pipe(
         Effect.mapError((err: any) => {
           if (err instanceof Error && err.message.includes("Authorization")) {
@@ -132,7 +133,7 @@ export const RentalHandler = HttpApiBuilder.group(Api, "rentals", (handlers) =>
         }
         
         const rentalService = yield* RentalService;
-        const customer = yield* rentalService.getCustomer(path.customerId);
+        const customer = yield* rentalService.getCustomer(path.customerId as CustomerId);
 
         if (!customer) {
           return yield* Effect.fail(
