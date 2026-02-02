@@ -31,31 +31,31 @@ const printStartupInfo = Effect.gen(function* () {
   const log = yield* LogConfig;
   const rateLimit = yield* RateLimiterConfig;
   
-  console.log("🚀 DVD Rental API starting...");
-  console.log(`📍 Server: http://localhost:${server.port}`);
-  console.log(`📖 Swagger: http://localhost:${server.port}/docs`);
-  console.log(`📊 Log level: ${log.level}`);
-  console.log(`🌐 CORS: ${allowedOrigins.join(", ")}`);
-  console.log(`🛡️  Rate limit: ${rateLimit.maxRequests} req/${rateLimit.windowMs / 1000}s`);
-  console.log("🔭 Jaeger: http://localhost:16686");
-  console.log("");
-  console.log("📚 Endpoints:");
-  console.log("   Health:     GET  /health, /ready");
-  console.log("   Films:      GET  /films, /films/:id, /films/:id/actors, /films/:id/availability");
-  console.log("   Categories: GET  /categories");
-  console.log("   Stores:     GET  /stores, /stores/:id, /stores/:storeId/films/:filmId/availability");
-  console.log("   Rentals:    POST /rentals, PUT /rentals/:id/return, GET /customers/:id/rentals");
-  console.log("   Payments:   POST /payments, GET /payments/:id, /customers/:id/payments, /customers/:id/balance");
-  console.log("   Customer:   POST /customer/login, /customer/register, GET /customer/profile/:id");
-  console.log("   Staff:      POST /staff/login, GET /staff, /staff/profile/:id");
-  console.log("");
+  yield* Effect.logInfo("🚀 DVD Rental API starting...");
+  yield* Effect.logInfo(`📍 Server: http://localhost:${server.port}`);
+  yield* Effect.logInfo(`📖 Swagger: http://localhost:${server.port}/docs`);
+  yield* Effect.logInfo(`📊 Log level: ${log.level}`);
+  yield* Effect.logInfo(`🌐 CORS: ${allowedOrigins.join(", ")}`);
+  yield* Effect.logInfo(`🛡️  Rate limit: ${rateLimit.maxRequests} req/${rateLimit.windowMs / 1000}s`);
+  yield* Effect.logInfo("🔭 Jaeger: http://localhost:16686");
+  yield* Effect.logInfo("📚 Endpoints:");
+  yield* Effect.logInfo("   Health:     GET  /health, /ready");
+  yield* Effect.logInfo("   Films:      GET  /films, /films/:id, /films/:id/actors, /films/:id/availability");
+  yield* Effect.logInfo("   Categories: GET  /categories");
+  yield* Effect.logInfo("   Stores:     GET  /stores, /stores/:id, /stores/:storeId/films/:filmId/availability");
+  yield* Effect.logInfo("   Rentals:    POST /rentals, PUT /rentals/:id/return, GET /customers/:id/rentals");
+  yield* Effect.logInfo("   Payments:   POST /payments, GET /payments/:id, /customers/:id/payments, /customers/:id/balance");
+  yield* Effect.logInfo("   Customer:   POST /customer/login, /customer/register, GET /customer/profile/:id");
+  yield* Effect.logInfo("   Staff:      POST /staff/login, GET /staff, /staff/profile/:id");
 });
 
-// Run startup info effect synchronously
-Effect.runSync(printStartupInfo);
+// Startup layer that prints info and then launches the HTTP server
+const StartupLive = Layer.effectDiscard(printStartupInfo).pipe(
+  Layer.provideMerge(HttpLive)
+);
 
 // Run with LoggerLive configuration, disable BunRuntime's default pretty logger
-const app = Layer.launch(HttpLive);
+const app = Layer.launch(StartupLive);
 
 BunRuntime.runMain(app, { disablePrettyLogger: true });
 
