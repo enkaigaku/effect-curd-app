@@ -20,11 +20,19 @@ const parseLogLevel = (level: string): LogLevel.LogLevel => {
 };
 
 // ============================================================
-// Pretty Logger with UTC Timestamps
+// Pretty Logger with Local Timestamps
 // ============================================================
 
-const UtcPrettyLogger = Logger.prettyLogger({
-  formatDate: (date) => date.toISOString(),
+const LocalPrettyLogger = Logger.prettyLogger({
+  formatDate: (date) => date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit", 
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }),
 });
 
 // ============================================================
@@ -37,7 +45,7 @@ export const LoggerLive = Layer.unwrapEffect(
     const logLevel = parseLogLevel(config.level);
     
     return Layer.mergeAll(
-      Logger.replace(Logger.defaultLogger, UtcPrettyLogger),
+      Logger.replace(Logger.defaultLogger, LocalPrettyLogger),
       Logger.minimumLogLevel(logLevel)
     );
   })
