@@ -1,6 +1,7 @@
-import { Effect, Context } from "effect";
+import { Effect, Context, Redacted } from "effect";
 import * as jose from "jose";
 import { HttpServerRequest } from "@effect/platform";
+import { JwtConfig } from "../config/AppConfig.js";
 
 // ============================================================
 // Auth Context for carrying authenticated user info
@@ -17,26 +18,27 @@ export interface AuthUser {
 export class CurrentUser extends Context.Tag("CurrentUser")<CurrentUser, AuthUser>() {}
 
 // ============================================================
-// JWT Verification
+// JWT Verification (uses Effect Config)
 // ============================================================
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env["JWT_SECRET"] ?? "customer-secret-key-change-in-production"
-);
-
 export const verifyJwtToken = (token: string) =>
-  Effect.tryPromise({
-    try: async () => {
-      const result = await jose.jwtVerify(token, JWT_SECRET);
-      return {
-        id: Number(result.payload.sub),
-        type: result.payload["type"] as "customer" | "staff",
-        email: result.payload["email"] as string | undefined,
-        username: result.payload["username"] as string | undefined,
-        storeId: result.payload["storeId"] as number | undefined,
-      } as AuthUser;
-    },
-    catch: () => new Error("Invalid or expired token"),
+  Effect.gen(function* () {
+    const config = yield* JwtConfig;
+    const secretValue = Redacted.value(config.secret);
+    const jwtSecret = new TextEncoder().encode(secretValue);
+    
+    const result = yield* Effect.tryPromise({
+      try: async () => jose.jwtVerify(token, jwtSecret),
+      catch: () => new Error("Invalid or expired token"),
+    });
+    
+    return {
+      id: Number(result.payload.sub),
+      type: result.payload["type"] as "customer" | "staff",
+      email: result.payload["email"] as string | undefined,
+      username: result.payload["username"] as string | undefined,
+      storeId: result.payload["storeId"] as number | undefined,
+    } as AuthUser;
   });
 
 // ============================================================

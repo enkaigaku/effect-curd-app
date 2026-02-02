@@ -5,13 +5,10 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "@effect/platform";
-
+import { RateLimiterConfig } from "./AppConfig.js";
 // ============================================================
-// Rate Limiter Configuration
+// Rate Limiter Configuration (uses Effect Config)
 // ============================================================
-
-const WINDOW_MS = parseInt(process.env["RATE_LIMIT_WINDOW_MS"] ?? "60000", 10); // 1 minute
-const MAX_REQUESTS = parseInt(process.env["RATE_LIMIT_MAX_REQUESTS"] ?? "100", 10); // 100 requests per minute
 
 interface RateLimitEntry {
   count: number;
@@ -23,6 +20,10 @@ interface RateLimitEntry {
 // ============================================================
 
 export const makeRateLimiterMiddleware = Effect.gen(function* () {
+  // Load config
+  const config = yield* RateLimiterConfig;
+  const { windowMs, maxRequests } = config;
+  
   // Shared state for storing request counts per IP
   const state = yield* Ref.make(new Map<string, RateLimitEntry>());
 
@@ -39,7 +40,7 @@ export const makeRateLimiterMiddleware = Effect.gen(function* () {
       return newMap;
     });
   }).pipe(
-    Effect.repeat(Schedule.spaced(Duration.millis(WINDOW_MS))),
+    Effect.repeat(Schedule.spaced(Duration.millis(windowMs))),
     Effect.forkDaemon,
   );
 
@@ -55,11 +56,11 @@ export const makeRateLimiterMiddleware = Effect.gen(function* () {
         const entry = newMap.get(ip);
 
         if (!entry || now > entry.resetTime) {
-          newMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+          newMap.set(ip, { count: 1, resetTime: now + windowMs });
           return [true, newMap] as const;
         }
 
-        if (entry.count >= MAX_REQUESTS) {
+        if (entry.count >= maxRequests) {
           return [false, newMap] as const;
         }
 
@@ -72,7 +73,7 @@ export const makeRateLimiterMiddleware = Effect.gen(function* () {
           { error: "Too Many Requests" },
           {
             status: 429,
-            headers: { "Retry-After": String(Math.ceil(WINDOW_MS / 1000)) },
+            headers: { "Retry-After": String(Math.ceil(windowMs / 1000)) },
           },
         );
       }
@@ -94,9 +95,3 @@ export const RateLimiterLive = Layer.unwrapEffect(
     return Layer.empty;
   }),
 ).pipe(Layer.provide(HttpApiBuilder.Middleware.layer));
-
-// Export config for logging
-export const rateLimitConfig = {
-  windowMs: WINDOW_MS,
-  maxRequests: MAX_REQUESTS,
-};

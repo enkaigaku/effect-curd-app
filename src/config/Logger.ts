@@ -1,24 +1,23 @@
-import { Layer, Logger, LogLevel } from "effect"
+import { Effect, Layer, Logger, LogLevel } from "effect";
+import { LogConfig } from "./AppConfig.js";
 
 // ============================================================
 // Logger Configuration
 // ============================================================
 
-// Read log level from environment variable (default: Info)
-const getLogLevel = (): LogLevel.LogLevel => {
-  const level = process.env["LOG_LEVEL"]?.toLowerCase() ?? "info"
-  
-  switch (level) {
-    case "trace": return LogLevel.Trace
-    case "debug": return LogLevel.Debug
-    case "info": return LogLevel.Info
-    case "warning": return LogLevel.Warning
-    case "error": return LogLevel.Error
-    case "fatal": return LogLevel.Fatal
-    case "none": return LogLevel.None
-    default: return LogLevel.Info
+// Parse log level string to LogLevel
+const parseLogLevel = (level: string): LogLevel.LogLevel => {
+  switch (level.toLowerCase()) {
+    case "trace": return LogLevel.Trace;
+    case "debug": return LogLevel.Debug;
+    case "info": return LogLevel.Info;
+    case "warning": return LogLevel.Warning;
+    case "error": return LogLevel.Error;
+    case "fatal": return LogLevel.Fatal;
+    case "none": return LogLevel.None;
+    default: return LogLevel.Info;
   }
-}
+};
 
 // ============================================================
 // Pretty Logger with UTC Timestamps
@@ -26,16 +25,21 @@ const getLogLevel = (): LogLevel.LogLevel => {
 
 const UtcPrettyLogger = Logger.prettyLogger({
   formatDate: (date) => date.toISOString(),
-})
+});
 
 // ============================================================
-// Exported Logger Layer
+// Exported Logger Layer (uses Effect Config)
 // ============================================================
 
-export const LoggerLive = Layer.mergeAll(
-  Logger.replace(Logger.defaultLogger, UtcPrettyLogger),
-  Logger.minimumLogLevel(getLogLevel())
-)
+export const LoggerLive = Layer.unwrapEffect(
+  Effect.gen(function* () {
+    const config = yield* LogConfig;
+    const logLevel = parseLogLevel(config.level);
+    
+    return Layer.mergeAll(
+      Logger.replace(Logger.defaultLogger, UtcPrettyLogger),
+      Logger.minimumLogLevel(logLevel)
+    );
+  })
+);
 
-// Re-export log level for reference
-export const currentLogLevel = getLogLevel()

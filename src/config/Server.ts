@@ -1,9 +1,15 @@
-import { BunHttpServer } from "@effect/platform-bun"
+import { Effect, Layer } from "effect";
+import { BunHttpServer } from "@effect/platform-bun";
+import { ServerConfig } from "./AppConfig.js";
 
 // ============================================================
-// HTTP Server Configuration
+// HTTP Server Configuration (uses Effect Config)
 // ============================================================
 
-export const PORT = parseInt(process.env["PORT"] ?? "8080", 10)
+export const ServerLive = Layer.unwrapEffect(
+  Effect.gen(function* () {
+    const config = yield* ServerConfig;
+    return BunHttpServer.layer({ port: config.port });
+  })
+);
 
-export const ServerLive = BunHttpServer.layer({ port: PORT })

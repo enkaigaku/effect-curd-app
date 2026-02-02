@@ -1,8 +1,9 @@
-import { Effect, Data } from "effect";
+import { Effect, Data, Redacted } from "effect";
 import * as bcrypt from "bcrypt";
 import * as jose from "jose";
 import { SqlClient } from "@effect/sql";
 import { StaffId, StoreId } from "../schema/Ids.js";
+import { JwtConfig } from "../config/AppConfig.js";
 
 // ============================================================
 // Staff Auth Errors
@@ -44,17 +45,16 @@ export interface StaffProfile {
 }
 
 // ============================================================
-// Staff Auth Service
+// Staff Auth Service (uses Effect Config for JWT)
 // ============================================================
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env["JWT_SECRET"] ?? "staff-secret-key-change-in-production"
-);
 
 export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffAuthService", {
   accessors: true,
   effect: Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
+    const jwtConfigData = yield* JwtConfig;
+    const jwtSecretValue = Redacted.value(jwtConfigData.secret);
+    const jwtSecret = new TextEncoder().encode(jwtSecretValue);
 
     return {
       // Staff login
@@ -95,7 +95,7 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
               .setProtectedHeader({ alg: "HS256" })
               .setIssuedAt()
               .setExpirationTime("8h") // Shorter expiry for staff
-              .sign(JWT_SECRET)
+              .sign(jwtSecret)
           );
 
           yield* Effect.logInfo(`Staff logged in: ${staff.staff_id}`);
@@ -164,7 +164,7 @@ export class StaffAuthService extends Effect.Service<StaffAuthService>()("StaffA
       // Verify JWT token
       verifyToken: Effect.fn("StaffAuthService.verifyToken")(function* (token: string) {
           const result = yield* Effect.tryPromise({
-            try: () => jose.jwtVerify(token, JWT_SECRET),
+            try: () => jose.jwtVerify(token, jwtSecret),
             catch: () => new Error("Invalid token"),
           });
 

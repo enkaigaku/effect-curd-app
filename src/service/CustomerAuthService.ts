@@ -1,8 +1,9 @@
-import { Effect, Data } from "effect";
+import { Effect, Data, Redacted } from "effect";
 import * as bcrypt from "bcrypt";
 import * as jose from "jose";
 import { SqlClient } from "@effect/sql";
 import { CustomerId, StoreId } from "../schema/Ids.js";
+import { JwtConfig } from "../config/AppConfig.js";
 
 // ============================================================
 // Customer Auth Errors
@@ -43,17 +44,16 @@ export interface CustomerProfile {
 }
 
 // ============================================================
-// Customer Auth Service
+// Customer Auth Service (uses Effect Config for JWT)
 // ============================================================
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env["JWT_SECRET"] ?? "customer-secret-key-change-in-production"
-);
 
 export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("CustomerAuthService", {
   accessors: true,
   effect: Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
+    const jwtConfigData = yield* JwtConfig;
+    const jwtSecretValue = Redacted.value(jwtConfigData.secret);
+    const jwtSecret = new TextEncoder().encode(jwtSecretValue);
 
     return {
       // Customer login
@@ -93,7 +93,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
               .setProtectedHeader({ alg: "HS256" })
               .setIssuedAt()
               .setExpirationTime("7d")
-              .sign(JWT_SECRET)
+              .sign(jwtSecret)
           );
 
           yield* Effect.logInfo(`Customer logged in: ${customer.customer_id}`);
@@ -143,7 +143,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
               .setProtectedHeader({ alg: "HS256" })
               .setIssuedAt()
               .setExpirationTime("7d")
-              .sign(JWT_SECRET)
+              .sign(jwtSecret)
           );
 
           yield* Effect.logInfo(`Customer registered: ${customerId}`);
@@ -211,7 +211,7 @@ export class CustomerAuthService extends Effect.Service<CustomerAuthService>()("
       // Verify JWT token
       verifyToken: Effect.fn("CustomerAuthService.verifyToken")(function* (token: string) {
           const result = yield* Effect.tryPromise({
-            try: () => jose.jwtVerify(token, JWT_SECRET),
+            try: () => jose.jwtVerify(token, jwtSecret),
             catch: () => new Error("Invalid token"),
           });
 
