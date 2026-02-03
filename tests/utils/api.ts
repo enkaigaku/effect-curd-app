@@ -31,12 +31,33 @@ export function get<T>(path: string) {
 }
 
 /**
+ * Authenticated GET request helper.
+ */
+export function authGet<T>(path: string, token: string) {
+  return apiRequest<T>(path, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+/**
  * POST request helper.
  */
 export function post<T>(path: string, body: unknown) {
   return apiRequest<T>(path, {
     method: "POST",
     body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Authenticated POST request helper.
+ */
+export function authPost<T>(path: string, body: unknown, token: string) {
+  return apiRequest<T>(path, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
 
@@ -49,3 +70,4 @@ export function put<T>(path: string, body?: unknown) {
     body: body ? JSON.stringify(body) : undefined,
   });
 }
+
